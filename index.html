@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Consultor de Retenções — JBC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --brand-01: #990024; --brand-02: #CC143F; --brand-03: #FF003C;
+    --dark-3: #2B2E33; --dark-2: #565B66; --dark-1: #6B768A;
+    --mid-grey: #D6D6D6; --light-3: #EFEFEF; --light-2: #F5F5F5; --light-1: #F9F9F9; --white: #FFFFFF;
+    --positive: #008542; --warning: #E58A00; --negative: #CC2200; --info: #295FCC;
+    --font: 'Lato', Arial, sans-serif;
+    --grid-gutter: 16px; --grid-margin-sm: 16px; --grid-margin-md: 32px;
+    --radius-sm: 2px; --radius-md: 4px;
+    --shadow-card: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font); font-size: 14px; color: var(--dark-3); background: var(--light-2); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+  :focus-visible { outline: 2px solid var(--info); outline-offset: 2px; }
+
+  /* Header */
+  .header { background: var(--white); border-bottom: 2px solid var(--brand-01); height: 56px; display: flex; align-items: center; padding: 0 var(--grid-margin-md); position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(153,0,36,.10); }
+  .header-logo { display: flex; align-items: center; text-decoration: none; }
+  .header-logo img { height: 36px; display: block; }
+  .header-divider { width: 1px; height: 20px; background: var(--mid-grey); margin: 0 12px; }
+  .header-module { font-size: 12px; color: var(--dark-1); }
+
+  /* Layout */
+  .page { max-width: 960px; margin: 0 auto; padding: 40px var(--grid-margin-md) 80px; }
+  .page-header { margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid var(--mid-grey); }
+  .page-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--brand-01); margin-bottom: 8px; }
+  .page-title { font-size: 24px; font-weight: 300; line-height: 1.2; margin-bottom: 6px; letter-spacing: -0.3px; }
+  .page-title strong { font-weight: 700; }
+  .page-desc { font-size: 13px; color: var(--dark-1); line-height: 1.5; max-width: 680px; }
+
+  /* Card / form */
+  .card { background: var(--white); border: 1px solid var(--mid-grey); border-radius: var(--radius-md); box-shadow: var(--shadow-card); }
+  .card-section { padding: 24px; border-bottom: 1px solid var(--light-3); }
+  .card-section:last-child { border-bottom: none; }
+  .card-section-title { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dark-1); margin-bottom: 16px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--grid-gutter); margin-bottom: 16px; }
+  .form-row:last-child { margin-bottom: 0; }
+  .form-row.full { grid-template-columns: 1fr; }
+  .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .field[hidden] { display: none; }
+  .field label, .field .label { font-size: 12px; font-weight: 700; color: var(--dark-2); letter-spacing: 0.02em; }
+  .field label .required { color: var(--brand-01); margin-left: 2px; }
+  .field input, .field select {
+    font-family: var(--font); font-size: 14px; color: var(--dark-3); background: var(--light-1);
+    border: none; border-bottom: 2px solid var(--mid-grey); border-radius: 0; padding: 10px 12px; height: 40px;
+    outline: none; transition: border-color 0.15s; width: 100%; appearance: none; -webkit-appearance: none;
+  }
+  .field select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B768A' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; cursor: pointer;
+  }
+  .field input:focus, .field select:focus { border-bottom-color: var(--brand-01); background: var(--white); }
+  .field input::placeholder { color: var(--dark-1); }
+  .field-helper { font-size: 11px; color: var(--dark-1); line-height: 1.45; }
+  .field-error { font-size: 11px; color: var(--negative); display: none; }
+  .field.has-error input, .field.has-error select { border-bottom-color: var(--negative); }
+  .field.has-error .field-error { display: block; }
+
+  /* Segmented control */
+  .segmented { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--mid-grey); border-radius: var(--radius-sm); overflow: hidden; }
+  .segmented input { position: absolute; opacity: 0; pointer-events: none; }
+  .segmented label { display: flex; flex-direction: column; gap: 2px; padding: 10px 14px; cursor: pointer; background: var(--light-1); font-size: 13px; font-weight: 700; color: var(--dark-2); letter-spacing: 0; border-right: 1px solid var(--mid-grey); }
+  .segmented label:last-of-type { border-right: none; }
+  .segmented label span { font-size: 11px; font-weight: 400; color: var(--dark-1); }
+  .segmented input:checked + label { background: var(--white); color: var(--brand-01); box-shadow: inset 0 -3px 0 var(--brand-01); }
+  .segmented input:focus-visible + label { outline: 2px solid var(--info); outline-offset: -2px; }
+
+  /* Combobox */
+  .combo { position: relative; }
+  .combo-list { position: absolute; left: 0; right: 0; top: 100%; z-index: 20; background: var(--white); border: 1px solid var(--mid-grey); border-top: none; box-shadow: 0 6px 16px rgba(0,0,0,.10); max-height: 320px; overflow-y: auto; list-style: none; }
+  .combo-list[hidden] { display: none; }
+  .combo-list li { padding: 10px 12px; cursor: pointer; display: grid; grid-template-columns: 48px 1fr; gap: 8px; font-size: 13px; line-height: 1.4; border-bottom: 1px solid var(--light-3); }
+  .combo-list li:last-child { border-bottom: none; }
+  .combo-list li .code { font-weight: 700; color: var(--brand-01); font-variant-numeric: tabular-nums; }
+  .combo-list li .code.hip { font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--info); padding-top: 2px; }
+  .combo-list li small { display: block; font-size: 11px; color: var(--dark-1); margin-top: 2px; }
+  .combo-list li.group { display: block; cursor: default; background: var(--light-3); font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dark-2); padding: 6px 12px; }
+  .combo-list li.group:hover { background: var(--light-3); }
+  .chosen-hips { color: var(--dark-1); }
+  .enq { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--light-3); }
+  .enq-title { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dark-1); margin-bottom: 6px; }
+  .enq-item { font-size: 13px; line-height: 1.5; margin-bottom: 4px; }
+  .enq-item span { color: var(--dark-1); font-size: 12px; }
+  .enq-ress { font-size: 12px; color: var(--dark-2); }
+  .combo-list li[aria-selected="true"], .combo-list li:hover { background: var(--light-2); }
+  .combo-list li.empty { display: block; color: var(--dark-1); cursor: default; }
+  .combo-list mark { background: #FBE7EC; color: inherit; }
+  .item-chosen { margin-top: 8px; padding: 10px 12px; background: var(--light-2); border-left: 3px solid var(--brand-01); font-size: 12px; line-height: 1.5; color: var(--dark-2); }
+  .item-chosen strong { color: var(--dark-3); }
+  .item-chosen[hidden] { display: none; }
+
+  /* Buttons */
+  .btn-primary { font-family: var(--font); font-size: 14px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--white); background: var(--brand-01); border: none; padding: 0 32px; height: 48px; cursor: pointer; border-radius: var(--radius-sm); transition: background 0.15s; width: 100%; }
+  .btn-primary:hover { background: var(--brand-02); }
+  .btn-primary:active { background: var(--brand-03); }
+
+  /* Alerts */
+  .alert { display: flex; gap: 10px; align-items: flex-start; padding: 12px 16px; border-radius: var(--radius-md); font-size: 13px; line-height: 1.5; margin-bottom: 16px; color: var(--dark-3); }
+  .alert-title { font-weight: 700; margin-bottom: 4px; }
+  .alert ul { margin: 4px 0 0 18px; }
+  .alert li { margin-bottom: 4px; }
+  .alert-info { background: #EEF3FB; border-left: 3px solid var(--info); }
+  .alert-warning { background: #FEF6E7; border-left: 3px solid var(--warning); }
+
+  /* Result */
+  #resultado { margin-top: 32px; }
+  #resultado[hidden] { display: none; }
+  .result-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .tag { display: inline-flex; align-items: center; gap: 6px; background: var(--light-3); border: 1px solid var(--mid-grey); color: var(--dark-2); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 10px; border-radius: 2px; }
+  .resumo { background: var(--white); border: 1px solid var(--mid-grey); border-left: 4px solid var(--dark-1); border-radius: var(--radius-md); padding: 16px 20px; margin-bottom: 16px; box-shadow: var(--shadow-card); }
+  .resumo.sim { border-left-color: var(--brand-01); }
+  .resumo.conf { border-left-color: var(--warning); }
+  .resumo.nao { border-left-color: var(--positive); }
+  .resumo-title { font-size: 20px; font-weight: 700; line-height: 1.3; }
+  .resumo.sim .resumo-title { color: var(--brand-01); }
+  .resumo-sub { font-size: 13px; color: var(--dark-2); margin-top: 6px; line-height: 1.5; }
+  .section-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dark-1); margin-bottom: 12px; }
+
+  .ret-table { border: 1px solid var(--mid-grey); border-radius: var(--radius-md); background: var(--white); overflow: hidden; margin-bottom: 24px; }
+  .ret-row { display: grid; grid-template-columns: 140px 150px 80px 1fr; gap: 12px; align-items: start; padding: 14px 16px; border-bottom: 1px solid var(--light-3); }
+  .ret-row:last-child { border-bottom: none; }
+  .ret-row.head { background: var(--light-3); padding: 10px 16px; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--dark-2); }
+  .ret-name { font-weight: 700; font-size: 14px; }
+  .ret-name small { display: block; font-weight: 400; font-size: 11px; color: var(--dark-1); margin-top: 2px; }
+  .ret-num { font-variant-numeric: tabular-nums; text-align: right; font-size: 14px; }
+  .ret-num.big { font-weight: 700; }
+  .ret-detail { grid-column: 1 / -1; font-size: 12px; color: var(--dark-2); line-height: 1.5; margin-top: -4px; }
+  .ret-detail .fund { color: var(--dark-1); }
+  .ret-code { font-size: 12px; color: var(--dark-2); line-height: 1.4; }
+  .ret-row.muted .ret-name, .ret-row.muted .ret-num { color: var(--dark-1); }
+  .mobile-label { display: none; }
+
+  .badge { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 3px 8px; border-radius: 2px; white-space: nowrap; }
+  .badge.reter { background: #F7E5E9; color: var(--brand-01); }
+  .badge.nao { background: var(--light-3); color: var(--dark-2); }
+  .badge.confirmar { background: #FEF0D9; color: #8A5300; }
+  .badge.dispensada { background: #E3F2EA; color: var(--positive); }
+  .badge.prestador { background: #EEF3FB; color: var(--info); }
+
+  .foot-note { font-size: 11px; color: var(--dark-1); line-height: 1.6; margin-top: 8px; }
+  .foot-note a { color: var(--info); }
+
+  /* Responsivo */
+  @media (max-width: 1055px) {
+    .ret-row { grid-template-columns: 120px 140px 72px 1fr; }
+  }
+  @media (max-width: 671px) {
+    .header { padding: 0 var(--grid-margin-sm); }
+    .header-logo img { height: 32px; }
+    .page { padding: 24px var(--grid-margin-sm) 64px; }
+    .page-title { font-size: 22px; }
+    .card-section { padding: 16px; }
+    .form-row { grid-template-columns: 1fr; }
+    .segmented { grid-template-columns: 1fr; }
+    .segmented label { border-right: none; border-bottom: 1px solid var(--mid-grey); }
+    .segmented label:last-of-type { border-bottom: none; }
+    .ret-row.head { display: none; }
+    .ret-row { grid-template-columns: 1fr auto; gap: 6px 12px; }
+    .ret-row > .cell-status { grid-column: 2; grid-row: 1; justify-self: end; }
+    .ret-row > .cell-aliq, .ret-row > .cell-code { grid-column: 1 / -1; display: flex; justify-content: space-between; text-align: right; }
+    .mobile-label { display: inline; font-size: 11px; font-weight: 700; color: var(--dark-1); text-transform: uppercase; letter-spacing: 0.06em; text-align: left; }
+    .ret-detail { margin-top: 4px; }
+  }
+</style>
+</head>
+<body>
+<header class="header" role="banner">
+  <a class="header-logo" href="#" aria-label="JBC Assessoria Contábil"><img src="data:image/png;base64,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" alt="JBC Assessoria Contábil"></a>
+  <div class="header-divider" aria-hidden="true"></div>
+  <span class="header-module">Micro Sistemas</span>
+</header>
+
+<main class="page">
+  <div class="page-header">
+    <div class="page-eyebrow">Departamento Fiscal</div>
+    <h1 class="page-title">Consultor de <strong>Retenções</strong></h1>
+    <p class="page-desc">Informe o serviço e as partes da operação para saber quais tributos são retidos na fonte, com alíquota de referência, código de recolhimento e fundamento legal. Cobre IRRF, CSLL, PIS, COFINS, INSS e ISS para tomador PJ privada ou órgão público.</p>
+  </div>
+
+  <form class="card" id="form" novalidate>
+    <div class="card-section">
+      <div class="card-section-title">Serviço</div>
+      <div class="form-row full">
+        <div class="field" id="f-item">
+          <label for="item-input">Serviço ou operação<span class="required" aria-hidden="true">*</span></label>
+          <div class="combo">
+            <input id="item-input" type="text" autocomplete="off" placeholder="Código da LC 116 ou nome da atividade (ex.: 17.06, contabilidade, locação, telemarketing)"
+                   role="combobox" aria-expanded="false" aria-controls="item-list" aria-autocomplete="list">
+            <ul id="item-list" class="combo-list" role="listbox" hidden></ul>
+          </div>
+          <span class="field-helper">Busca nos itens da LC 116 e também nas hipóteses legais de retenção, o que cobre operações fora da lista (locação, royalties, mercadorias).</span>
+          <div class="item-chosen" id="item-chosen" hidden></div>
+          <span class="field-error" id="item-error">Nada selecionado. Digite o código (ex.: 15.01) ou escolha uma opção da lista.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-section">
+      <div class="card-section-title">Operação</div>
+      <div class="form-row">
+        <div class="field" id="f-tomador">
+          <label for="tomador">Tomador do serviço<span class="required" aria-hidden="true">*</span></label>
+          <select id="tomador">
+            <option value="pj">Pessoa jurídica de direito privado</option>
+            <option value="pjsn">Pessoa jurídica optante pelo Simples Nacional</option>
+            <option value="fed">Órgão ou entidade da administração pública federal</option>
+            <option value="est">Estado, DF ou município (adm. direta, autarquia, fundação)</option>
+          </select>
+          <span class="field-helper" id="tomador-help"></span>
+        </div>
+        <div class="field" id="f-regime">
+          <label for="regime">Regime tributário do prestador<span class="required" aria-hidden="true">*</span></label>
+          <select id="regime">
+            <option value="lucro">Lucro Presumido ou Lucro Real</option>
+            <option value="simples">Simples Nacional (ME/EPP)</option>
+            <option value="mei">MEI</option>
+            <option value="coop">Cooperativa de trabalho ou associação profissional</option>
+          </select>
+          <span class="field-helper" id="regime-help"></span>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field" id="f-cessao">
+          <label for="cessao">Forma de contratação do serviço</label>
+          <select id="cessao">
+            <option value="nao">Sem cessão de mão de obra nem empreitada</option>
+            <option value="cessao">Cessão de mão de obra</option>
+            <option value="empreitada">Empreitada</option>
+          </select>
+          <span class="field-helper" id="cessao-help">Define a retenção de INSS.</span>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field" id="f-anexo" hidden>
+          <label for="anexo">Atividade tributada no Anexo IV do Simples?</label>
+          <select id="anexo">
+            <option value="nao">Não (Anexos III ou V)</option>
+            <option value="sim">Sim (Anexo IV)</option>
+          </select>
+          <span class="field-helper">Só o Anexo IV recolhe a CPP fora do DAS e por isso sofre retenção de INSS.</span>
+        </div>
+        <div class="field" id="f-cprb" hidden>
+          <label for="cprb">Prestador contribui pela CPRB (desoneração da folha)?</label>
+          <select id="cprb">
+            <option value="nao">Não</option>
+            <option value="sim">Sim</option>
+          </select>
+          <span class="field-helper">Empresa na CPRB sofre retenção de INSS de 3,5% em vez de 11%.</span>
+        </div>
+        <div class="field" id="f-mat" hidden>
+          <label for="mat">Há fornecimento de materiais discriminado na nota?</label>
+          <select id="mat">
+            <option value="nao">Não</option>
+            <option value="sim">Sim</option>
+          </select>
+          <span class="field-helper">Com materiais discriminados, o órgão público aplica o código 6147 (5,85%) em vez de 6190 (9,45%).</span>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field" id="f-mesmo">
+          <label for="mesmo">Prestador estabelecido no mesmo município do tomador?</label>
+          <select id="mesmo">
+            <option value="nao">Não</option>
+            <option value="sim">Sim</option>
+          </select>
+          <span class="field-helper">Define a retenção de ISS.</span>
+        </div>
+        <div class="field" id="f-exec" hidden>
+          <label for="exec">Onde o serviço é executado?</label>
+          <select id="exec">
+            <option value="tomador">No município do tomador</option>
+            <option value="outro">Em outro município</option>
+          </select>
+          <span class="field-helper" id="exec-help"></span>
+        </div>
+      </div>
+    </div>
+    <div class="card-section">
+      <button type="submit" class="btn-primary" id="btn">Consultar retenções</button>
+    </div>
+  </form>
+
+  <section id="resultado" hidden aria-live="polite">
+    <div class="result-head" id="result-tags"></div>
+    <div id="resumo"></div>
+    <div id="alerts"></div>
+    <div class="section-label">Quadro de retenções</div>
+    <div class="ret-table" id="tabela" role="table" aria-label="Quadro de retenções"></div>
+    <p class="foot-note">
+      O motor parte das listas fechadas de hipóteses legais: RIR/2018, arts. 714, § 1º (40 serviços profissionais), 716, 718 e 719; Lei 10.833/2003, arts. 29 e 30, com o art. 1º da IN SRF 459/2004; IN RFB 1.234/2012 (órgãos públicos); Lei 8.212/1991, art. 31, com os arts. 111 a 115 da IN RFB 2.110/2022 (INSS). Cada item da LC 116 é ligado às hipóteses em que se enquadra; ISS pelos arts. 3º e 6º, § 2º, II da LC 116/2003 (incisos da LC 157/2016 declarados inconstitucionais nas ADI 5.835 e 5.862 seguem a redação anterior; inciso III com redação da LC 218/2025). A natureza efetiva do contrato prevalece sobre o código do item: onde o enquadramento varia, o quadro mostra "Confirmar" em vez de cravar. Retenções de valor igual ou inferior a R$ 10,00 são dispensadas (IR: Lei 9.430/1996, art. 67; CSRF: Lei 10.833/2003, art. 31, § 3º; INSS: IN RFB 2.110/2022, art. 115). Regras conferidas em 27/10/2026.
+    </p>
+  </section>
+</main>
+
+<script>
+const ITENS = {"01.01": "Análise e desenvolvimento de sistemas", "01.02": "Programação", "01.03": "Processamento, armazenamento ou hospedagem de dados, textos, imagens, vídeos, páginas eletrônicas, aplicativos e sistemas de informação, entre outros formatos, e congêneres", "01.04": "Elaboração de programas de computadores, inclusive de jogos eletrônicos, independentemente da arquitetura construtiva da máquina em que o programa será executado, incluindo tablets, smartphones e congêneres", "01.05": "Licenciamento ou cessão de direito de uso de programas de computação", "01.06": "Assessoria e consultoria em informática", "01.07": "Suporte técnico em informática, inclusive instalação, configuração e manutenção de programas de computação e bancos de dados", "01.08": "Planejamento, confecção, manutenção e atualização de páginas eletrônicas", "01.09": "Disponibilização, sem cessão definitiva, de conteúdos de áudio, vídeo, imagem e texto por meio da internet, respeitada a imunidade de livros, jornais e periódicos (exceto a distribuição de conteúdos pelas prestadoras de serviço de acesso condicionado, de que trata a lei no 12.485, de 12 de setembro de 2011, sujeita ao ICMS)", "02.01": "Serviços de pesquisas e desenvolvimento de qualquer natureza", "03.02": "Cessão de direito de uso de marcas e de sinais de propaganda", "03.03": "Exploração de salões de festas, centro de convenções, escritórios virtuais, stands, quadras esportivas, estádios, ginásios, auditórios, casas de espetáculos, parques de diversões, canchas e congêneres, para realização de eventos ou negócios de qualquer natureza", "03.04": "Locação, sublocação, arrendamento, direito de passagem ou permissão de uso, compartilhado ou não, de ferrovia, rodovia, postes, cabos, dutos e condutos de qualquer natureza", "03.05": "Cessão de andaimes, palcos, coberturas e outras estruturas de uso temporário", "04.01": "Medicina e biomedicina", "04.02": "Análises clínicas, patologia, eletricidade médica, radioterapia, quimioterapia, ultra-sonografia, ressonância magnética, radiologia, tomografia e congêneres", "04.03": "Hospitais, clínicas, laboratórios, sanatórios, manicômios, casas de saúde, prontos-socorros, ambulatórios e congêneres", "04.04": "Instrumentação cirúrgica", "04.05": "Acupuntura", "04.06": "Enfermagem, inclusive serviços auxiliares", "04.07": "Serviços farmacêuticos", "04.08": "Terapia ocupacional, fisioterapia e fonoaudiologia", "04.09": "Terapias de qualquer espécie destinadas ao tratamento físico, orgânico e mental", "04.10": "Nutrição", "04.11": "Obstetrícia", "04.12": "Odontologia", "04.13": "Ortóptica", "04.14": "Próteses sob encomenda", "04.15": "Psicanálise", "04.16": "Psicologia", "04.17": "Casas de repouso e de recuperação, creches, asilos e congêneres", "04.18": "Inseminação artificial, fertilização in vitro e congêneres", "04.19": "Bancos de sangue, leite, pele, olhos, óvulos, sêmen e congêneres", "04.20": "Coleta de sangue, leite, tecidos, sêmen, órgãos e materiais biológicos de qualquer espécie", "04.21": "Unidade de atendimento, assistência ou tratamento móvel e congêneres", "04.22": "Planos de medicina de grupo ou individual e convênios para prestação de assistência médica, hospitalar, odontológica e congêneres", "04.23": "Outros planos de saúde que se cumpram através de serviços de terceiros contratados, credenciados, cooperados ou apenas pagos pelo operador do plano mediante indicação do beneficiário", "05.01": "Medicina veterinária e zootecnia", "05.02": "Hospitais, clínicas, ambulatórios, prontos-socorros e congêneres, na área veterinária", "05.03": "Laboratórios de análise na área veterinária", "05.04": "Inseminação artificial, fertilização in vitro e congêneres", "05.05": "Bancos de sangue e de órgãos e congêneres", "05.06": "Coleta de sangue, leite, tecidos, sêmen, órgãos e materiais biológicos de qualquer espécie", "05.07": "Unidade de atendimento, assistência ou tratamento móvel e congêneres", "05.08": "Guarda, tratamento, amestramento, embelezamento, alojamento e congêneres", "05.09": "Planos de atendimento e assistência médico-veterinária", "06.01": "Barbearia, cabeleireiros, manicuros, pedicuros e congêneres", "06.02": "Esteticistas, tratamento de pele, depilação e congêneres", "06.03": "Banhos, duchas, sauna, massagens e congêneres", "06.04": "Ginástica, dança, esportes, natação, artes marciais e demais atividades físicas", "06.05": "Centros de emagrecimento, spa e congêneres", "06.06": "Aplicação de tatuagens, piercings e congêneres", "07.01": "Engenharia, agronomia, agrimensura, arquitetura, geologia, urbanismo, paisagismo e congêneres", "07.02": "Execução, por administração, empreitada ou subempreitada, de obras de construção civil, hidráulica ou elétrica e de outras obras semelhantes, inclusive sondagem, perfuração de poços, escavação, drenagem e irrigação, terraplanagem, pavimentação, concretagem e a instalação e montagem de produtos, peças e equipamentos (exceto o fornecimento de mercadorias produzidas pelo prestador de serviços fora do local da prestação dos serviços, que fica sujeito ao ICMS)", "07.03": "Elaboração de planos diretores, estudos de viabilidade, estudos organizacionais e outros, relacionados com obras e serviços de engenharia; elaboração de anteprojetos, projetos básicos e projetos executivos para trabalhos de engenharia", "07.04": "Demolição", "07.05": "Reparação, conservação e reforma de edifícios, estradas, pontes, portos e congêneres (exceto o fornecimento de mercadorias produzidas pelo prestador dos serviços, fora do local da prestação dos serviços, que fica sujeito ao ICMS)", "07.06": "Colocação e instalação de tapetes, carpetes, assoalhos, cortinas, revestimentos de parede, vidros, divisórias, placas de gesso e congêneres, com material fornecido pelo tomador do serviço", "07.07": "Recuperação, raspagem, polimento e lustração de pisos e congêneres", "07.08": "Calafetação", "07.09": "Varrição, coleta, remoção, incineração, tratamento, reciclagem, separação e destinação final de lixo, rejeitos e outros resíduos quaisquer", "07.10": "Limpeza, manutenção e conservação de vias e logradouros públicos, imóveis, chaminés, piscinas, parques, jardins e congêneres", "07.11": "Decoração e jardinagem, inclusive corte e poda de árvores", "07.12": "Controle e tratamento de efluentes de qualquer natureza e de agentes físicos, químicos e biológicos", "07.13": "Dedetização, desinfecção, desinsetização, imunização, higienização, desratização, pulverização e congêneres", "07.16": "Florestamento, reflorestamento, semeadura, adubação, reparação de solo, plantio, silagem, colheita, corte e descascamento de árvores, silvicultura, exploração florestal e dos serviços congêneres indissociáveis da formação, manutenção e colheita de florestas, para quaisquer fins e por quaisquer meios", "07.17": "Escoramento, contenção de encostas e serviços congêneres", "07.18": "Limpeza e dragagem de rios, portos, canais, baías, lagos, lagoas, represas, açudes e congêneres", "07.19": "Acompanhamento e fiscalização da execução de obras de engenharia, arquitetura e urbanismo", "07.20": "Aerofotogrametria (inclusive interpretação), cartografia, mapeamento, levantamentos topográficos, batimétricos, geográficos, geodésicos, geológicos, geofísicos e congêneres", "07.21": "Pesquisa, perfuração, cimentação, mergulho, perfilagem, concretação, testemunhagem, pescaria, estimulação e outros serviços relacionados com a exploração e explotação de petróleo, gás natural e de outros recursos minerais", "07.22": "Nucleação e bombardeamento de nuvens e congêneres", "08.01": "Ensino regular pré-escolar, fundamental, médio e superior", "08.02": "Instrução, treinamento, orientação pedagógica e educacional, avaliação de conhecimentos de qualquer natureza", "09.01": "Hospedagem de qualquer natureza em hotéis, apart-service condominiais, flat, apart-hotéis, hotéis residência, residence-service, suite service, hotelaria marítima, motéis, pensões e congêneres; ocupação por temporada com fornecimento de serviço (o valor da alimentação e gorjeta, quando incluído no preço da diária, fica sujeito ao imposto sobre serviços)", "09.02": "Agenciamento, organização, promoção, intermediação e execução de programas de turismo, passeios, viagens, excursões, hospedagens e congêneres", "09.03": "Guias de turismo", "10.01": "Agenciamento, corretagem ou intermediação de câmbio, de seguros, de cartões de crédito, de planos de saúde e de planos de previdência privada", "10.02": "Agenciamento, corretagem ou intermediação de títulos em geral, valores mobiliários e contratos quaisquer", "10.03": "Agenciamento, corretagem ou intermediação de direitos de propriedade industrial, artística ou literária", "10.04": "Agenciamento, corretagem ou intermediação de contratos de arrendamento mercantil (leasing), de franquia (franchising) e de faturização (factoring)", "10.05": "Agenciamento, corretagem ou intermediação de bens móveis ou imóveis, não abrangidos em outros itens ou subitens, inclusive aqueles realizados no âmbito de bolsas de mercadorias e futuros, por quaisquer meios", "10.06": "Agenciamento marítimo", "10.07": "Agenciamento de notícias", "10.08": "Agenciamento de publicidade e propaganda, inclusive o agenciamento de veiculação por quaisquer meios", "10.09": "Representação de qualquer natureza, inclusive comercial", "10.10": "Distribuição de bens de terceiros", "11.01": "Guarda e estacionamento de veículos terrestres automotores, de aeronaves e de embarcações", "11.02": "Vigilância, segurança ou monitoramento de bens e pessoas", "11.03": "Escolta, inclusive de veículos e cargas", "11.04": "Armazenamento, depósito, carga, descarga, arrumação e guarda de bens de qualquer espécie", "11.05": "Vigilância, segurança ou monitoramento de bens, pessoas e semoventes", "12.01": "Espetáculos teatrais", "12.02": "Exibições cinematográficas", "12.03": "Espetáculos circenses", "12.04": "Programas de auditório", "12.05": "Parques de diversões, centros de lazer e congêneres", "12.06": "Boates, taxi-dancing e congêneres", "12.07": "Shows, ballet, danças, desfiles, bailes, óperas, concertos, recitais, festivais e congêneres", "12.08": "Feiras, exposições, congressos e congêneres", "12.09": "Bilhares, boliches e diversões eletrônicas ou não", "12.10": "Corridas e competições de animais", "12.11": "Competições esportivas ou de destreza física ou intelectual, com ou sem a participação do espectador", "12.12": "Execução de música", "12.13": "Produção, mediante ou sem encomenda prévia, de eventos, espetáculos, entrevistas, shows, ballet , danças, desfiles, bailes, teatros, óperas, concertos, recitais, festivais e congêneres, inclusive programas de televisão, matérias jornalísticas ou publicitárias", "12.14": "Fornecimento de música para ambientes fechados ou não, mediante transmissão por qualquer processo", "12.15": "Desfiles de blocos carnavalescos ou folclóricos, trios elétricos e congêneres", "12.16": "Exibição de filmes, entrevistas, musicais, espetáculos, shows, concertos, desfiles, óperas, competições esportivas, de destreza intelectual ou congêneres", "12.17": "Recreação e animação, inclusive em festas e eventos de qualquer natureza", "13.02": "Fonografia ou gravação de sons, inclusive trucagem, dublagem, mixagem e congêneres", "13.03": "Fotografia e cinematografia, inclusive revelação, ampliação, cópia, reprodução, trucagem e congêneres", "13.04": "Reprografia, microfilmagem e digitalização", "13.05": "Composição gráfica, inclusive confecção de impressos gráficos, fotocomposição, clicheria, zincografia, litografia e fotolitografia, exceto se destinados a posterior operação de comercialização ou industrialização, ainda que incorporados, de qualquer forma, a outra mercadoria que deva ser objeto de posterior circulação, tais como bulas, rótulos, etiquetas, caixas, cartuchos, embalagens e manuais técnicos e de instrução, quando ficarão sujeitos ao ICMS", "14.01": "Lubrificação, limpeza, lustração, revisão, carga e recarga, conserto, restauração, blindagem, manutenção e conservação de máquinas, veículos, aparelhos, equipamentos, motores, elevadores ou de qualquer objeto (exceto peças e partes empregadas, que ficam sujeitas ao ICMS)", "14.02": "Assistência técnica", "14.03": "Recondicionamento de motores (exceto peças e partes empregadas, que ficam sujeitas ao ICMS)", "14.04": "Recauchutagem ou regeneração de pneus", "14.05": "Restauração, recondicionamento, acondicionamento, pintura, beneficiamento, lavagem, secagem, tingimento, galvanoplastia, anodização, corte, recorte, plastificação, costura, acabamento, polimento e congêneres de objetos quaisquer", "14.06": "Instalação e montagem de aparelhos, máquinas e equipamentos, inclusive montagem industrial, prestados ao usuário final, exclusivamente com material por ele fornecido", "14.07": "Colocação de molduras e congêneres", "14.08": "Encadernação, gravação e douração de livros, revistas e congêneres", "14.09": "Alfaiataria e costura, quando o material for fornecido pelo usuário final, exceto aviamento", "14.10": "Tinturaria e lavanderia", "14.11": "Tapeçaria e reforma de estofamentos em geral", "14.12": "Funilaria e lanternagem", "14.13": "Carpintaria e serralheria", "14.14": "Guincho intramunicipal, guindaste e içamento", "15.01": "Administração de fundos quaisquer, de consórcio, de cartão de crédito ou débito e congêneres, de carteira de clientes, de cheques pré-datados e congêneres", "15.02": "Abertura de contas em geral, inclusive conta-corrente, conta de investimentos e aplicação e caderneta de poupança, no país e no exterior, bem como a manutenção das referidas contas ativas e inativas", "15.03": "Locação e manutenção de cofres particulares, de terminais eletrônicos, de terminais de atendimento e de bens e equipamentos em geral", "15.04": "Fornecimento ou emissão de atestados em geral, inclusive atestado de idoneidade, atestado de capacidade financeira e congêneres", "15.05": "Cadastro, elaboração de ficha cadastral, renovação cadastral e congêneres, inclusão ou exclusão no cadastro de emitentes de cheques sem fundos", "15.06": "Emissão, reemissão e fornecimento de avisos, comprovantes e documentos em geral; abono de firmas; coleta e entrega de documentos, bens e valores; comunicação com outra agência ou com a administração central; licenciamento eletrônico de veículos; transferência de veículos; agenciamento fiduciário ou depositário; devolução de bens em custódia", "15.07": "Acesso, movimentação, atendimento e consulta a contas em geral, por qualquer meio ou processo, inclusive por telefone, fac-símile, internet e telex, acesso a terminais de atendimento, inclusive vinte e quatro horas; acesso a outro banco e a rede compartilhada; fornecimento de saldo, extrato e demais informações relativas a contas em geral, por qualquer meio ou processo", "15.08": "Emissão, reemissão, alteração, cessão, substituição, cancelamento e registro de contrato de crédito; estudo, análise e avaliação de operações de crédito; emissão, concessão, alteração ou contratação de aval, fiança, anuência e congêneres; serviços relativos a abertura de crédito, para quaisquer fins", "15.09": "Arrendamento mercantil (leasing) de quaisquer bens, inclusive cessão de direitos e obrigações, substituição de garantia, alteração, cancelamento e registro de contrato, e demais serviços relacionados ao arrendamento mercantil (leasing)", "15.10": "Serviços relacionados a cobranças, recebimentos ou pagamentos em geral, de títulos quaisquer, de contas ou carnês, de câmbio, de tributos e por conta de terceiros, inclusive os efetuados por meio eletrônico, automático ou por máquinas de atendimento; fornecimento de posição de cobrança, recebimento ou pagamento; emissão de carnês, fichas de compensação, impressos e documentos em geral", "15.11": "Devolução de títulos, protesto de títulos, sustação de protesto, manutenção de títulos, reapresentação de títulos, e demais serviços a eles relacionados", "15.12": "Custódia em geral, inclusive de títulos e valores mobiliários", "15.13": "Serviços relacionados a operações de câmbio em geral, edição, alteração, prorrogação, cancelamento e baixa de contrato de câmbio; emissão de registro de exportação ou de crédito; cobrança ou depósito no exterior; emissão, fornecimento e cancelamento de cheques de viagem; fornecimento, transferência, cancelamento e demais serviços relativos a carta de crédito de importação, exportação e garantias recebidas; envio e recebimento de mensagens em geral relacionadas a operações de câmbio", "15.14": "Fornecimento, emissão, reemissão, renovação e manutenção de cartão magnético, cartão de crédito, cartão de débito, cartão salário e congêneres", "15.15": "Compensação de cheques e títulos quaisquer; serviços relacionados a depósito, inclusive depósito identificado, a saque de contas quaisquer, por qualquer meio ou processo, inclusive em terminais eletrônicos e de atendimento", "15.16": "Emissão, reemissão, liquidação, alteração, cancelamento e baixa de ordens de pagamento, ordens de crédito e similares, por qualquer meio ou processo; serviços relacionados à transferência de valores, dados, fundos, pagamentos e similares, inclusive entre contas em geral", "15.17": "Emissão, fornecimento, devolução, sustação, cancelamento e oposição de cheques quaisquer, avulso ou por talão", "15.18": "Serviços relacionados a crédito imobiliário, avaliação e vistoria de imóvel ou obra, análise técnica e jurídica, emissão, reemissão, alteração, transferência e renegociação de contrato, emissão e reemissão do termo de quitação e demais serviços relacionados a crédito imobiliário", "16.01": "Serviços de transporte coletivo municipal rodoviário, metroviário, ferroviário e aquaviário de passageiros", "16.02": "Outros serviços de transporte de natureza municipal", "17.01": "Assessoria ou consultoria de qualquer natureza, não contida em outros itens desta lista; análise, exame, pesquisa, coleta, compilação e fornecimento de dados e informações de qualquer natureza, inclusive cadastro e similares", "17.02": "Datilografia, digitação, estenografia, expediente, secretaria em geral, resposta audível, redação, edição, interpretação, revisão, tradução, apoio e infra-estrutura administrativa e congêneres", "17.03": "Planejamento, coordenação, programação ou organização técnica, financeira ou administrativa", "17.04": "Recrutamento, agenciamento, seleção e colocação de mão-de-obra", "17.05": "Fornecimento de mão-de-obra, mesmo em caráter temporário, inclusive de empregados ou trabalhadores, avulsos ou temporários, contratados pelo prestador de serviço", "17.06": "Propaganda e publicidade, inclusive promoção de vendas, planejamento de campanhas ou sistemas de publicidade, elaboração de desenhos, textos e demais materiais publicitários", "17.08": "Franquia (franchising)", "17.09": "Perícias, laudos, exames técnicos e análises técnicas", "17.10": "Planejamento, organização e administração de feiras, exposições, congressos e congêneres", "17.11": "Organização de festas e recepções; bufê (exceto o fornecimento de alimentação e bebidas, que fica sujeito ao ICMS)", "17.12": "Administração em geral, inclusive de bens e negócios de terceiros", "17.13": "Leilão e congêneres", "17.14": "Advocacia", "17.15": "Arbitragem de qualquer espécie, inclusive jurídica", "17.16": "Auditoria", "17.17": "Análise de organização e métodos", "17.18": "Atuária e cálculos técnicos de qualquer natureza", "17.19": "Contabilidade, inclusive serviços técnicos e auxiliares", "17.20": "Consultoria e assessoria econômica ou financeira", "17.21": "Estatística", "17.22": "Cobrança em geral", "17.23": "Assessoria, análise, avaliação, atendimento, consulta, cadastro, seleção, gerenciamento de informações, administração de contas a receber ou a pagar e em geral, relacionados a operações de faturização (factoring)", "17.24": "Apresentação de palestras, conferências, seminários e congêneres", "17.25": "Inserção de textos, desenhos e outros materiais de propaganda e publicidade, em qualquer meio (exceto em livros, jornais, periódicos e nas modalidades de serviços de radiodifusão sonora e de sons e imagens de recepção livre e gratuita)", "18.01": "Serviços de regulação de sinistros vinculados a contratos de seguros; inspeção e avaliação de riscos para cobertura de contratos de seguros; prevenção e gerência de riscos seguráveis e congêneres", "19.01": "Serviços de distribuição e venda de bilhetes e demais produtos de loteria, bingos, cartões, pules ou cupons de apostas, sorteios, prêmios, inclusive os decorrentes de títulos de capitalização e congêneres", "20.01": "Serviços portuários, ferroportuários, utilização de porto, movimentação de passageiros, reboque de embarcações, rebocador escoteiro, atracação, desatracação, serviços de praticagem, capatazia, armazenagem de qualquer natureza, serviços acessórios, movimentação de mercadorias, serviços de apoio marítimo, de movimentação ao largo, serviços de armadores, estiva, conferência, logística e congêneres", "20.02": "Serviços aeroportuários, utilização de aeroporto, movimentação de passageiros, armazenagem de qualquer natureza, capatazia, movimentação de aeronaves, serviços de apoio aeroportuários, serviços acessórios, movimentação de mercadorias, logística e congêneres", "20.03": "Serviços de terminais rodoviários, ferroviários, metroviários, movimentação de passageiros, mercadorias, inclusive suas operações, logística e congêneres", "21.01": "Serviços de registros públicos, cartorários e notariais", "22.01": "Serviços de exploração de rodovia mediante cobrança de preço ou pedágio dos usuários, envolvendo execução de serviços de conservação, manutenção, melhoramentos para adequação de capacidade e segurança de trânsito, operação, monitoração, assistência aos usuários e outros serviços definidos em contratos, atos de concessão ou de permissão ou em normas oficiais", "23.01": "Serviços de programação e comunicação visual, desenho industrial e congêneres", "24.01": "Serviços de chaveiros, confecção de carimbos, placas, sinalização visual, banners, adesivos e congêneres", "25.01": "Funerais, inclusive fornecimento de caixão, urna ou esquifes; aluguel de capela; transporte do corpo cadavérico; fornecimento de flores, coroas e outros paramentos; desembaraço de certidão de óbito; fornecimento de véu, essa e outros adornos; embalsamento, embelezamento, conservação ou restauração de cadáveres", "25.02": "Translado intramunicipal e cremação de corpos e partes de corpos cadavéricos", "25.03": "Planos ou convênio funerários", "25.04": "Manutenção e conservação de jazigos e cemitérios", "25.05": "Cessão de uso de espaços em cemitérios para sepultamento", "26.01": "Serviços de coleta, remessa ou entrega de correspondências, documentos, objetos, bens ou valores, inclusive pelos correios e suas agências franqueadas; courrier e congêneres", "27.01": "Serviços de assistência social", "28.01": "Serviços de avaliação de bens e serviços de qualquer natureza", "29.01": "Serviços de biblioteconomia", "30.01": "Serviços de biologia, biotecnologia e química", "31.01": "Serviços técnicos em edificações, eletrônica, eletrotécnica, mecânica, telecomunicações e congêneres", "32.01": "Serviços de desenhos técnicos", "33.01": "Serviços de desembaraço aduaneiro, comissários, despachantes e congêneres", "34.01": "Serviços de investigações particulares, detetives e congêneres", "35.01": "Serviços de reportagem, assessoria de imprensa, jornalismo e relações públicas", "36.01": "Serviços de meteorologia", "37.01": "Serviços de artistas, atletas, modelos e manequins", "38.01": "Serviços de museologia", "39.01": "Serviços de ourivesaria e lapidação (quando o material for fornecido pelo tomador do serviço)", "40.01": "Obras de arte sob encomenda"};
+/* ═══ HIPÓTESES LEGAIS DE RETENÇÃO ═══════════════════════════════════
+   Fonte de verdade do motor. Cada hipótese é uma entrada de lista fechada em lei.
+   ir:   { aliq, cod, base, modo }   modo: 'reter' | 'prestador' (auto-retenção / agência) | 'confirmar'
+   pcc:  base legal da CSRF (Lei 10.833/2003, art. 30; IN SRF 459/2004, art. 1º)
+   inss: { art: '111' (cessão ou empreitada) | '112' (só cessão), inc }  — IN RFB 2.110/2022
+   fed:  código da IN RFB 1.234/2012 quando diferente do padrão 6190
+   ressalva: exceção que consta da própria lei                                              */
+const IR714 = { aliq: 1.5, cod: 'DARF 1708', base: 'RIR/2018, art. 714, § 1º' };
+const IR716 = { aliq: 1.0, cod: 'DARF 1708', base: 'RIR/2018, art. 716' };
+const PCC_PROF = 'Lei 10.833/2003, art. 30; IN SRF 459/2004, art. 1º, § 2º, IV (serviços profissionais do art. 714, § 1º do RIR)';
+const PCC_30 = 'Lei 10.833/2003, art. 30; IN SRF 459/2004, art. 1º';
+
+const HIP = {};
+function prof(id, nome, ressalva) {
+  HIP[id] = { grupo: 'Serviço profissional (art. 714)', nome, ressalva, ir: IR714, pcc: PCC_PROF };
+}
+/* RIR/2018, art. 714, § 1º — 40 serviços profissionais */
+prof('p-adm',    'Administração de bens ou negócios em geral', 'exceto consórcios ou fundos mútuos para aquisição de bens');
+prof('p-adv',    'Advocacia');
+prof('p-anclin', 'Análise clínica laboratorial');
+prof('p-antec',  'Análises técnicas');
+prof('p-arq',    'Arquitetura');
+prof('p-asstec', 'Assessoria e consultoria técnica', 'exceto assistência técnica prestada a terceiros relativa a ramo de indústria ou comércio explorado pelo prestador');
+prof('p-assoc',  'Assistência social');
+prof('p-aud',    'Auditoria');
+prof('p-aval',   'Avaliação e perícia');
+prof('p-bio',    'Biologia e biomedicina');
+prof('p-calc',   'Cálculo em geral');
+prof('p-cons',   'Consultoria');
+prof('p-cont',   'Contabilidade');
+prof('p-des',    'Desenho técnico');
+prof('p-eco',    'Economia');
+prof('p-proj',   'Elaboração de projetos');
+prof('p-eng',    'Engenharia', 'exceto construção de estradas, pontes, prédios e obras assemelhadas');
+prof('p-ens',    'Ensino e treinamento');
+prof('p-est',    'Estatística');
+prof('p-fisio',  'Fisioterapia');
+prof('p-fono',   'Fonoaudiologia');
+prof('p-geo',    'Geologia');
+prof('p-leil',   'Leilão');
+prof('p-med',    'Medicina', 'exceto a prestada por ambulatório, banco de sangue, casa de saúde, casa de recuperação ou repouso sob orientação médica, hospital e pronto-socorro');
+prof('p-nutri',  'Nutricionismo e dietética');
+prof('p-odonto', 'Odontologia');
+prof('p-feiras', 'Organização de feiras de amostras, congressos, seminários, simpósios e congêneres');
+prof('p-pesq',   'Pesquisa em geral');
+prof('p-plan',   'Planejamento');
+prof('p-prog',   'Programação');
+prof('p-prot',   'Prótese');
+prof('p-psi',    'Psicologia e psicanálise');
+prof('p-quim',   'Química');
+prof('p-radio',  'Radiologia e radioterapia');
+prof('p-rp',     'Relações públicas');
+prof('p-desp',   'Serviço de despachante');
+prof('p-to',     'Terapêutica ocupacional');
+prof('p-trad',   'Tradução ou interpretação comercial');
+prof('p-urb',    'Urbanismo');
+prof('p-vet',    'Veterinária');
+
+/* RIR/2018, art. 716 (1%) + CSRF + INSS (IN 2.110, art. 111) */
+HIP['l-limp'] = { grupo: 'Limpeza, conservação, segurança (art. 716)', nome: 'Limpeza', ir: IR716, pcc: PCC_30, inss: { art: '111', inc: 'I' } };
+HIP['l-cons'] = { grupo: 'Limpeza, conservação, segurança (art. 716)', nome: 'Conservação', ressalva: 'conservação de imóveis; reformas e obras são construção civil', ir: IR716, pcc: PCC_30, inss: { art: '111', inc: 'I' } };
+HIP['l-seg']  = { grupo: 'Limpeza, conservação, segurança (art. 716)', nome: 'Segurança', ir: IR716, pcc: PCC_30, inss: { art: '111', inc: 'II' } };
+HIP['l-vig']  = { grupo: 'Limpeza, conservação, segurança (art. 716)', nome: 'Vigilância', ressalva: 'para o INSS, monitoramento eletrônico não sofre retenção', ir: IR716, pcc: PCC_30, inss: { art: '111', inc: 'II' } };
+HIP['l-lmo']  = { grupo: 'Limpeza, conservação, segurança (art. 716)', nome: 'Locação de mão de obra', ir: IR716, pcc: PCC_30 };
+HIP['l-tval'] = { grupo: 'Limpeza, conservação, segurança (art. 716)', nome: 'Transporte de valores', ressalva: 'IR de 1% por ser tratado como segurança/vigilância', ir: IR716, pcc: PCC_30 };
+
+/* Lei 10.833/2003, art. 30 — CSRF sem IR do art. 714 */
+HIP['c-manut']  = { grupo: 'CSRF (Lei 10.833, art. 30)', nome: 'Manutenção de bens, máquinas, veículos, equipamentos e instalações', pcc: PCC_30, inss: { art: '112', inc: 'XIV' } };
+const IR29 = { aliq: 1.5, cod: 'DARF 5944', base: 'Lei 10.833/2003, art. 29', modo: 'confirmar', obs: 'A RFB associa o código 5944 a empresas de factoring. Confirme se o prestador é empresa de fomento mercantil.' };
+HIP['c-credit'] = { grupo: 'CSRF (Lei 10.833, art. 30)', nome: 'Assessoria creditícia', ir: IR29, pcc: PCC_30 };
+HIP['c-merc']   = { grupo: 'CSRF (Lei 10.833, art. 30)', nome: 'Assessoria mercadológica', ressalva: 'propaganda e publicidade não se enquadram (SC SRRF 9ª RF 225/2004)', ir: IR29, pcc: PCC_30 };
+HIP['c-gcred']  = { grupo: 'CSRF (Lei 10.833, art. 30)', nome: 'Gestão de crédito, seleção e riscos', ir: IR29, pcc: PCC_30 };
+HIP['c-contas'] = { grupo: 'CSRF (Lei 10.833, art. 30)', nome: 'Administração de contas a pagar e a receber', ir: IR29, pcc: PCC_30 };
+
+/* RIR/2018, arts. 718 e 719 */
+HIP['m-comis'] = { grupo: 'Comissões e mediação (art. 718)', nome: 'Comissões e corretagens', ir: { aliq: 1.5, cod: 'DARF 8045', base: 'RIR/2018, art. 718, I' } };
+HIP['m-rep']   = { grupo: 'Comissões e mediação (art. 718)', nome: 'Representação comercial', ir: { aliq: 1.5, cod: 'DARF 8045', base: 'RIR/2018, art. 718, I' } };
+HIP['m-med']   = { grupo: 'Comissões e mediação (art. 718)', nome: 'Mediação de negócios', ir: { aliq: 1.5, cod: 'DARF 8045', base: 'RIR/2018, art. 718, I' } };
+HIP['m-publi'] = { grupo: 'Comissões e mediação (art. 718)', nome: 'Propaganda e publicidade',
+  ressalva: 'o IR é recolhido pela agência, por ordem e conta do anunciante; repasses a veículos ficam fora da base (IN SRF 123/1992; SC Cosit 234/2025)',
+  ir: { aliq: 1.5, cod: 'DARF 8045 (pela agência)', base: 'RIR/2018, art. 718, II', modo: 'prestador' } };
+HIP['m-auto']  = { grupo: 'Comissões e mediação (art. 718)', nome: 'Comissões com auto-retenção (IN SRF 153/1987)',
+  ressalva: 'venda de passagens, excursões ou viagens; administração de cartões de crédito; colocação de títulos; câmbio; refeições-convênio e administração de convênios — o IR é recolhido pelo próprio prestador',
+  ir: { aliq: 1.5, cod: 'DARF 8045 (pelo prestador)', base: 'RIR/2018, art. 718, I; IN SRF 153/1987', modo: 'prestador' } };
+
+/* IN RFB 2.110/2022 — hipóteses só de INSS */
+const inssH = (id, art, inc, nome, ressalva) => HIP[id] = { grupo: art === '111' ? 'INSS — cessão ou empreitada (IN 2.110, art. 111)' : 'INSS — cessão de mão de obra (IN 2.110, art. 112)', nome, ressalva, inss: { art, inc } };
+inssH('i-cc',     '111', 'III',  'Construção civil (construção, demolição, reforma, ampliação e complementares)');
+inssH('i-rural',  '111', 'IV',   'Serviços de natureza rural');
+inssH('i-dig',    '111', 'V',    'Digitação');
+inssH('i-prep',   '111', 'VI',   'Preparação de dados para processamento');
+inssH('i-acab',   '112', 'I',    'Acabamento');
+inssH('i-emb',    '112', 'II',   'Embalagem');
+inssH('i-acond',  '112', 'III',  'Acondicionamento');
+inssH('i-cobr',   '112', 'IV',   'Cobrança');
+inssH('i-lixo',   '112', 'V',    'Coleta ou reciclagem de lixo ou de resíduos', 'exceto com uso de contêineres ou caçambas estacionárias');
+inssH('i-copa',   '112', 'VI',   'Copa');
+inssH('i-hotel',  '112', 'VII',  'Hotelaria');
+inssH('i-corte',  '112', 'VIII', 'Corte ou ligação de serviços públicos');
+inssH('i-distr',  '112', 'IX',   'Distribuição');
+inssH('i-ens',    '112', 'X',    'Treinamento e ensino');
+inssH('i-entr',   '112', 'XI',   'Entrega de contas e de documentos');
+inssH('i-lmed',   '112', 'XII',  'Ligação de medidores');
+inssH('i-leit',   '112', 'XIII', 'Leitura de medidores');
+inssH('i-manut',  '112', 'XIV',  'Manutenção de instalações, de máquinas ou de equipamentos');
+inssH('i-mont',   '112', 'XV',   'Montagem');
+inssH('i-oper',   '112', 'XVI',  'Operação de máquinas, de equipamentos e de veículos');
+inssH('i-ped',    '112', 'XVII', 'Operação de pedágio ou de terminal de transporte');
+inssH('i-transp', '112', 'XVIII','Operação de transporte de passageiros');
+inssH('i-port',   '112', 'XIX',  'Portaria, recepção ou ascensorista');
+inssH('i-movm',   '112', 'XX',   'Recepção, triagem ou movimentação de materiais');
+inssH('i-promo',  '112', 'XXI',  'Promoção de vendas ou de eventos');
+inssH('i-secr',   '112', 'XXII', 'Secretaria e expediente');
+inssH('i-saude',  '112', 'XXIII','Saúde');
+inssH('i-tel',    '112', 'XXIV', 'Telefonia ou telemarketing');
+
+/* Operações fora da Lista da LC 116 (sem ISS). Na NFS-e Nacional: códigos 99.XX.YY */
+HIP['x-locmov'] = { grupo: 'Fora da LC 116', foraLC: '99.04.01', nome: 'Locação de bens móveis', nenhuma: 'Locação de bens não consta de nenhuma lista de retenção entre pessoas jurídicas (RIR/2018, arts. 714 a 719; Lei 10.833/2003, art. 30). Se houver operador cedido junto com o equipamento, avalie locação de mão de obra.' };
+HIP['x-locimo'] = { grupo: 'Fora da LC 116', foraLC: '99.03.01 a 99.03.05', nome: 'Locação, cessão, arrendamento ou servidão de imóveis', nenhuma: 'Aluguel pago a pessoa jurídica não sofre retenção de IR nem de CSRF (o IR sobre aluguel só alcança pagamento a pessoa física).' };
+HIP['x-direitos'] = { grupo: 'Fora da LC 116', foraLC: '99.02.01', nome: 'Cessão de direitos, royalties e direitos autorais', nenhuma: 'Royalties e direitos autorais pagos a pessoa jurídica no país não sofrem retenção de IR nem de CSRF (há retenção quando o beneficiário é pessoa física ou residente no exterior).' };
+HIP['x-merc']   = { grupo: 'Fora da LC 116', foraLC: '—', nome: 'Fornecimento de bens e mercadorias', fed: '6147', nenhuma: 'Venda de mercadorias entre pessoas jurídicas privadas não tem retenção. Para órgão público federal, aplica-se a IN 1.234/2012 (código 6147, 5,85%).' };
+HIP['x-outros'] = { grupo: 'Fora da LC 116', foraLC: '99.01.01', nome: 'Outras operações sujeitas a IBS/CBS sem ISS', nenhuma: 'Sem hipótese de retenção identificada. Verifique se a operação se enquadra em alguma das hipóteses legais (pesquise pelo nome da atividade).' };
+
+/* ═══ ITEM DA LC 116 → HIPÓTESES LEGAIS ══════════════════════════════
+   h:   hipóteses (ids de HIP) em que o item se enquadra
+   c:   enquadramento depende da natureza do contrato → status "Confirmar"
+   obs: nota que não muda o status
+   fed: código da IN 1.234 diferente de 6190; mat: pode ter materiais (6147)
+   Item ausente = nenhuma hipótese federal/INSS. Pendente: validar contra o RETENSERV. */
+const ITEM_HIP = {
+  '01.01': { h: ['p-prog', 'p-proj'], c: 'Desenvolvimento sob encomenda tende a ser "programação"/"elaboração de projetos". Licença de software pronto não é serviço profissional.' },
+  '01.02': { h: ['p-prog'] },
+  '01.04': { h: ['p-prog'], c: 'Desenvolvimento sob encomenda tende a ser "programação". Licença de software pronto não é serviço profissional.' },
+  '01.06': { h: ['p-asstec', 'p-cons'] },
+  '01.07': { h: ['p-asstec'], c: 'Suporte com conteúdo técnico-consultivo é "assessoria técnica". Suporte operacional rotineiro, não.' },
+  '01.08': { h: ['p-plan', 'p-prog'], c: 'Planejamento e programação de páginas são serviço profissional. Manutenção rotineira de conteúdo, não.' },
+  '02.01': { h: ['p-pesq'] },
+  '04.01': { h: ['p-med', 'p-bio', 'i-saude'] },
+  '04.02': { h: ['p-anclin', 'p-radio', 'i-saude'], c: 'Se o prestador for hospital ou pronto-socorro, aplica-se a exceção da "medicina" no art. 714.' },
+  '04.03': { h: ['i-saude'], fed: '6147', obs: 'Serviços hospitalares são exceção expressa da "medicina" no art. 714: sem IR e sem CSRF entre PJ privadas.' },
+  '04.04': { h: ['p-med', 'i-saude'], c: 'Confirme se a instrumentação é prestada como atividade médica.' },
+  '04.05': { h: ['p-med', 'p-fisio', 'i-saude'], c: 'Confirme se a acupuntura é praticada como medicina ou fisioterapia.' },
+  '04.06': { h: ['i-saude'], obs: 'Enfermagem não consta da lista do art. 714.' },
+  '04.08': { h: ['p-to', 'p-fisio', 'p-fono', 'i-saude'] },
+  '04.09': { h: ['p-to', 'i-saude'], c: '"Terapêutica ocupacional" consta da lista. Outras terapias, confirmar.' },
+  '04.10': { h: ['p-nutri', 'i-saude'] },
+  '04.11': { h: ['p-med', 'i-saude'] },
+  '04.12': { h: ['p-odonto', 'i-saude'] },
+  '04.13': { h: ['p-med', 'i-saude'], c: 'Ortóptica não consta nominalmente da lista do art. 714.' },
+  '04.14': { h: ['p-prot', 'i-saude'] },
+  '04.15': { h: ['p-psi', 'i-saude'] },
+  '04.16': { h: ['p-psi', 'i-saude'] },
+  '04.18': { h: ['p-med', 'i-saude'], c: 'Confirme se o serviço é prestado como medicina.' },
+  '05.01': { h: ['p-vet'] },
+  '05.02': { h: ['p-vet'], c: 'Hospital veterinário: confirme o enquadramento como "veterinária".' },
+  '05.03': { h: ['p-vet', 'p-anclin'], c: 'Laboratório veterinário: confirme o enquadramento.' },
+  '07.01': { h: ['p-eng', 'p-arq', 'p-geo', 'p-urb'] },
+  '07.02': { h: ['i-cc'], mat: 1, obs: 'Execução de obras é exceção expressa da "engenharia" no art. 714: sem IR e sem CSRF entre PJ privadas.' },
+  '07.03': { h: ['p-proj', 'p-plan'] },
+  '07.04': { h: ['i-cc'], mat: 1 },
+  '07.05': { h: ['i-cc', 'l-cons'], mat: 1, c: 'Conservação de imóveis tem IR de 1% e CSRF. Reparação e reforma são construção civil: só INSS.' },
+  '07.06': { h: ['i-cc'], mat: 1, c: 'Confirme se é etapa de obra de construção civil.' },
+  '07.07': { h: ['i-cc'], mat: 1, c: 'Confirme se é etapa de obra de construção civil.' },
+  '07.08': { h: ['i-cc'], mat: 1, c: 'Confirme se é etapa de obra de construção civil.' },
+  '07.09': { h: ['l-limp', 'i-lixo'] },
+  '07.10': { h: ['l-limp', 'l-cons'] },
+  '07.11': { h: ['l-cons', 'i-cc'], c: 'Jardinagem e conservação de áreas verdes são "conservação". Decoração não.' },
+  '07.12': { h: ['l-limp'], c: 'Controle de pragas é tratado como limpeza/conservação em parte das soluções de consulta.' },
+  '07.13': { h: ['l-limp'], c: 'Dedetização e higienização são tratadas como limpeza em parte das soluções de consulta.' },
+  '07.16': { h: ['i-rural'] },
+  '07.17': { h: ['i-cc'], mat: 1 },
+  '07.18': { h: ['l-limp'], c: 'Confirme se o contrato é de limpeza (art. 716) ou de obra (dragagem).' },
+  '07.19': { h: ['p-eng'] },
+  '07.20': { h: ['p-eng'], c: 'Topografia e aerofotogrametria são tratadas como engenharia em parte das soluções de consulta.' },
+  '08.01': { h: ['p-ens', 'i-ens'] },
+  '08.02': { h: ['p-ens', 'i-ens'] },
+  '09.02': { h: ['m-auto'], obs: 'A base é a comissão da agência, não o valor repassado a companhias aéreas, hotéis etc.' },
+  '10.01': { h: ['m-comis', 'm-med'] }, '10.02': { h: ['m-comis', 'm-med'] }, '10.03': { h: ['m-comis', 'm-med'] },
+  '10.04': { h: ['m-comis', 'm-med'] }, '10.05': { h: ['m-comis', 'm-med'] }, '10.06': { h: ['m-comis', 'm-med'] },
+  '10.07': { h: ['m-comis', 'm-med'] },
+  '10.08': { h: ['m-publi'] },
+  '10.09': { h: ['m-rep'] },
+  '10.10': { h: ['m-comis'], c: 'Confirme se a remuneração é comissão.' },
+  '11.02': { h: ['l-seg', 'l-vig'] },
+  '11.03': { h: ['l-seg'], c: 'Escolta tende a ser tratada como segurança.' },
+  '11.04': { h: ['i-movm'] },
+  '11.05': { h: ['l-seg', 'l-vig'] },
+  '12.08': { h: ['p-feiras'] },
+  '12.13': { h: ['i-promo'], obs: 'Produção de eventos não consta da lista do art. 714. Se for organização de feiras, congressos ou seminários, use o item 17.10.' },
+  '14.01': { h: ['c-manut', 'i-manut'] },
+  '14.02': { h: ['c-manut', 'i-manut'], c: 'Assistência técnica entra como "manutenção" para a CSRF quando há conserto ou conservação.' },
+  '14.03': { h: ['c-manut', 'i-manut'] },
+  '14.04': { h: ['c-manut'], c: 'Confirme o enquadramento como "manutenção".' },
+  '14.06': { h: ['i-mont'], mat: 1 },
+  '14.12': { h: ['c-manut'], c: 'Funilaria e lanternagem entram como "manutenção" de veículos.' },
+  '14.14': { h: ['i-oper'] },
+  '15.01': { h: ['p-adm'], obs: 'Administração de fundos, carteira e cheques é "administração de bens ou negócios" (art. 714), exceto consórcios e fundos mútuos para aquisição de bens. Se a remuneração for comissão de administração de cartão de crédito, o IR é auto-retido pelo prestador (IN SRF 153/1987).' },
+  '15.03': { h: ['c-manut'], c: 'Só a parcela de manutenção de cofres e equipamentos entra como "manutenção". Locação não tem retenção.' },
+  '15.08': { h: ['c-credit', 'c-gcred'], c: 'Estudo e análise de operações de crédito se aproximam de assessoria creditícia e gestão de crédito. Confirme.' },
+  '15.10': { h: ['c-contas'], c: 'Cobranças, recebimentos e pagamentos por conta de terceiros se aproximam de "administração de contas a pagar e a receber". Confirme.' },
+  '15.18': { h: ['p-aval', 'p-antec'], c: 'A parcela de avaliação, vistoria e análise técnica é serviço profissional. Os demais serviços de crédito imobiliário, não.' },
+  '16.01': { h: ['i-transp'] },
+  '17.01': { h: ['p-cons', 'p-asstec'] },
+  '17.02': { h: ['i-dig', 'i-prep', 'i-secr'] },
+  '17.03': { h: ['p-plan'] },
+  '17.04': { obs: 'Recrutamento e seleção não é "locação de mão de obra". Se houver cessão de trabalhadores, use o item 17.05.' },
+  '17.05': { h: ['l-lmo'] },
+  '17.06': { h: ['m-publi', 'i-promo'] },
+  '17.09': { h: ['p-aval'] },
+  '17.10': { h: ['p-feiras'] },
+  '17.12': { h: ['p-adm'] },
+  '17.13': { h: ['p-leil'] },
+  '17.14': { h: ['p-adv'] },
+  '17.15': { obs: 'Arbitragem não consta nominalmente da lista do art. 714.' },
+  '17.16': { h: ['p-aud'] },
+  '17.17': { h: ['p-cons', 'p-plan'] },
+  '17.18': { h: ['p-calc', 'p-est'] },
+  '17.19': { h: ['p-cont'] },
+  '17.20': { h: ['p-eco', 'p-cons'] },
+  '17.21': { h: ['p-est'] },
+  '17.22': { h: ['c-contas', 'i-cobr'] },
+  '17.23': { h: ['c-credit', 'c-gcred', 'c-contas'] },
+  '17.24': { h: ['p-ens', 'i-ens'], c: 'Palestras tendem a ser "ensino e treinamento".' },
+  '18.01': { h: ['p-aval'] },
+  '20.01': { h: ['i-movm'] }, '20.02': { h: ['i-movm'] }, '20.03': { h: ['i-movm', 'i-ped'] },
+  '22.01': { h: ['i-ped'] },
+  '23.01': { h: ['p-des', 'p-proj'], c: 'Confirme o enquadramento em "desenho técnico" ou "elaboração de projetos".' },
+  '25.04': { h: ['l-cons'], c: 'Manutenção e conservação de jazigos: confirme o enquadramento como "conservação".' },
+  '26.01': { h: ['i-entr'], c: 'Se houver transporte de valores, há IR de 1% e CSRF.' },
+  '27.01': { h: ['p-assoc'] },
+  '28.01': { h: ['p-aval'] },
+  '30.01': { h: ['p-bio', 'p-quim'] },
+  '31.01': { h: ['p-asstec'], c: 'Serviços técnicos tendem a ser "assessoria técnica".' },
+  '32.01': { h: ['p-des'] },
+  '33.01': { h: ['p-desp'] },
+  '35.01': { h: ['p-rp'], c: '"Relações públicas" consta da lista. Reportagem e jornalismo, não.' }
+};
+/* Códigos da IN 1.234 para órgão federal que dependem do item */
+['15.01','15.02','15.03','15.04','15.05','15.06','15.07','15.08','15.09','15.10','15.11','15.12','15.13','15.14','15.15','15.16','15.17','15.18']
+  .forEach(k => { ITEM_HIP[k] = Object.assign({ fed: '6188' }, ITEM_HIP[k] || {}); });
+ITEM_HIP['16.01'].fed = '6175';
+ITEM_HIP['16.02'] = { fed: '6147' };
+
+/* LC 116/2003, art. 3º — exceções ao local do estabelecimento prestador (base da Isabela / Econet, 27/10/2026).
+   Incisos alterados pela LC 157/2016 e declarados inconstitucionais (ADI 5.835 e 5.862) seguem a redação anterior.
+   XXIII (4.22, 4.23, 5.09), XXIV (15.01) e XXV (15.09) foram declarados inconstitucionais: voltam ao estabelecimento prestador. */
+const ART3 = {
+  '03.05': { inc: 'II',    local: 'da instalação dos andaimes, palcos, coberturas e outras estruturas' },
+  '07.02': { inc: 'III',   local: 'da execução da obra' },
+  '07.19': { inc: 'III',   local: 'da execução da obra' },
+  '14.14': { inc: 'III',   local: 'da execução da obra', obs: 'Incluído no inciso III pela LC 218/2025, com efeitos a partir de 25/09/2025.' },
+  '07.04': { inc: 'IV',    local: 'da demolição' },
+  '07.05': { inc: 'V',     local: 'das edificações em geral, estradas, pontes, portos e congêneres' },
+  '07.09': { inc: 'VI',    local: 'da execução da varrição, coleta, remoção e tratamento de lixo e resíduos' },
+  '07.10': { inc: 'VII',   local: 'da execução da limpeza, manutenção e conservação' },
+  '07.11': { inc: 'VIII',  local: 'da execução da decoração e jardinagem, do corte e poda de árvores' },
+  '07.12': { inc: 'IX',    local: 'do controle e tratamento do efluente e de agentes físicos, químicos e biológicos' },
+  '07.16': { inc: 'XII',   local: 'do florestamento, reflorestamento, semeadura e congêneres', obs: 'Vale a redação anterior à LC 157/2016 (ADI 5.835 e 5.862).' },
+  '07.17': { inc: 'XIII',  local: 'da execução do escoramento e contenção de encostas' },
+  '07.18': { inc: 'XIV',   local: 'da limpeza e dragagem' },
+  '11.01': { inc: 'XV',    local: 'onde o bem estiver guardado ou estacionado' },
+  '11.02': { inc: 'XVI',   local: 'dos bens ou do domicílio das pessoas vigiados', obs: 'Vale a redação anterior à LC 157/2016 (ADI 5.835 e 5.862), sem "segurados ou monitorados".' },
+  '11.04': { inc: 'XVII',  local: 'do armazenamento, depósito, carga, descarga, arrumação e guarda do bem' },
+  '16.01': { inc: 'XIX',   local: 'onde está sendo executado o transporte', obs: 'Vale a redação anterior à LC 157/2016 (ADI 5.835 e 5.862).' },
+  '16.02': { inc: 'XIX',   local: 'onde está sendo executado o transporte', obs: 'Vale a redação anterior à LC 157/2016 (ADI 5.835 e 5.862).' },
+  '17.05': { inc: 'XX',    local: 'do estabelecimento do tomador da mão de obra', tomador: 1 },
+  '17.10': { inc: 'XXI',   local: 'da feira, exposição, congresso ou congênere' },
+  '20.01': { inc: 'XXII',  local: 'do porto, aeroporto, ferroporto ou terminal', obs: 'Serviços em águas marítimas são devidos no estabelecimento prestador (§ 3º), exceto os do próprio 20.01.' },
+  '20.02': { inc: 'XXII',  local: 'do porto, aeroporto, ferroporto ou terminal' },
+  '20.03': { inc: 'XXII',  local: 'do porto, aeroporto, ferroporto ou terminal' },
+  '03.04': { inc: '§ 1º',  local: 'em cada município em cujo território haja extensão da ferrovia, rodovia, postes, cabos ou dutos', multi: 1 },
+  '22.01': { inc: '§ 2º',  local: 'em cada município em cujo território haja extensão de rodovia explorada', multi: 1 }
+};
+['12.01','12.02','12.03','12.04','12.05','12.06','12.07','12.08','12.09','12.10','12.11','12.12','12.14','12.15','12.16','12.17']
+  .forEach(k => ART3[k] = { inc: 'XVIII', local: 'da execução do serviço de diversão, lazer ou entretenimento' });
+/* Itens que já tiveram local no tomador e voltaram à regra geral por inconstitucionalidade */
+const ART3_ADI = { '04.22': 'XXIII', '04.23': 'XXIII', '05.09': 'XXIII', '15.01': 'XXIV', '15.09': 'XXV' };
+/* LC 116/2003, art. 6º, § 2º, II — tomador PJ responsável por lei complementar */
+const ART6_II = ['03.05','07.02','07.04','07.05','07.09','07.10','07.12','07.16','07.17','07.19','11.02','17.05','17.10'];
+
+
+/* IN RFB 1.234/2012, Anexo I — composição por código (%) */
+const IN1234 = {
+  '6190': { ir: 4.80, csll: 1, cofins: 3, pis: 0.65, desc: 'Demais serviços (9,45%)' },
+  '6147': { ir: 1.20, csll: 1, cofins: 3, pis: 0.65, desc: 'Bens, serviços com emprego de materiais, construção civil com materiais, hospitalares e transporte de cargas (5,85%)' },
+  '6175': { ir: 2.40, csll: 1, cofins: 3, pis: 0.65, desc: 'Transporte de passageiros (7,05%)' },
+  '6188': { ir: 2.40, csll: 1, cofins: 3, pis: 0.65, desc: 'Bancos, financeiras, seguradoras e previdência complementar (7,05%)' },
+  '8863': { ir: 0,    csll: 1, cofins: 3, pis: 0.65, desc: 'Associações profissionais e cooperativas (4,65%)' }
+};
+
+const $ = id => document.getElementById(id);
+const fmtPct = v => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+const semAcento = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+const escapeHtml = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const lista = a => a.length > 1 ? a.slice(0, -1).join(', ') + ' e ' + a[a.length - 1] : (a[0] || '');
+
+/* ── Busca: itens da LC 116 + hipóteses legais ───────────────────── */
+const LISTA = [
+  ...Object.keys(ITENS).sort().map(code => ({ tipo: 'item', id: code, rotulo: code, desc: ITENS[code],
+    busca: semAcento(code + ' ' + code.replace('.', '') + ' ' + ITENS[code]) })),
+  ...Object.entries(HIP).map(([id, h]) => ({ tipo: 'hip', id, rotulo: h.foraLC ? 'Fora LC' : 'Hipótese', desc: h.nome, sub: h.grupo,
+    busca: semAcento(h.nome + ' ' + h.grupo + ' ' + (h.ressalva || '') + ' ' + (h.foraLC || '')) }))
+];
+let sel = null, activeIdx = -1, resultados = [];
+const input = $('item-input'), list = $('item-list');
+
+function highlight(text, termo) {
+  if (!termo || termo.length < 2) return escapeHtml(text);
+  const plain = semAcento(text);
+  let out = '', i = 0, idx;
+  while ((idx = plain.indexOf(termo, i)) !== -1) {
+    out += escapeHtml(text.slice(i, idx)) + '<mark>' + escapeHtml(text.slice(idx, idx + termo.length)) + '</mark>';
+    i = idx + termo.length;
+  }
+  return out + escapeHtml(text.slice(i));
+}
+function buscar(txt) {
+  const termos = semAcento(txt.trim()).split(/\s+/).filter(Boolean);
+  if (!termos.length) return LISTA.filter(x => x.tipo === 'item');
+  // prioriza termos no início de palavra ("locação" não traz "colocação"); se nada achar, aceita trecho no meio
+  const inicio = LISTA.filter(it => termos.every(t => (' ' + it.busca.replace(/[^a-z0-9.]+/g, ' ')).includes(' ' + t)));
+  const achados = inicio.length ? inicio : LISTA.filter(it => termos.every(t => it.busca.includes(t)));
+  // itens primeiro, depois hipóteses
+  return achados.filter(x => x.tipo === 'item').concat(achados.filter(x => x.tipo === 'hip'));
+}
+function renderList() {
+  const termos = semAcento(input.value.trim()).split(/\s+/).filter(Boolean);
+  resultados = buscar(input.value).slice(0, 50);
+  activeIdx = -1;
+  if (!resultados.length) {
+    list.innerHTML = '<li class="empty" role="option" aria-disabled="true">Nada encontrado. Tente o código do item (ex.: 17.06) ou o nome da atividade.</li>';
+  } else {
+    let lastTipo = null;
+    list.innerHTML = resultados.map((it, i) => {
+      let head = '';
+      if (it.tipo !== lastTipo) {
+        head = `<li class="group" role="presentation">${it.tipo === 'item' ? 'Itens da LC 116' : 'Hipóteses legais e operações fora da LC 116'}</li>`;
+        lastTipo = it.tipo;
+      }
+      const d = termos.length === 1 ? highlight(it.desc, termos[0]) : escapeHtml(it.desc);
+      return head + `<li role="option" id="opt-${i}" data-i="${i}" aria-selected="false"><span class="code${it.tipo === 'hip' ? ' hip' : ''}">${escapeHtml(it.rotulo)}</span><span>${d}${it.sub ? `<small>${escapeHtml(it.sub)}</small>` : ''}</span></li>`;
+    }).join('');
+  }
+  list.hidden = false; input.setAttribute('aria-expanded', 'true');
+}
+function closeList() { list.hidden = true; input.setAttribute('aria-expanded', 'false'); input.removeAttribute('aria-activedescendant'); }
+function setActive(i) {
+  const opts = list.querySelectorAll('li[data-i]');
+  opts.forEach(o => o.setAttribute('aria-selected', 'false'));
+  if (i < 0 || i >= opts.length) return;
+  activeIdx = i; opts[i].setAttribute('aria-selected', 'true');
+  input.setAttribute('aria-activedescendant', opts[i].id);
+  opts[i].scrollIntoView({ block: 'nearest' });
+}
+
+/* Perfil de enquadramento da seleção */
+function perfilDe(s) {
+  if (!s) return null;
+  if (s.tipo === 'item') {
+    const m = ITEM_HIP[s.id] || {};
+    return { tipo: 'item', item: s.id, hips: (m.h || []).filter(h => HIP[h]), c: m.c, obs: m.obs, fed: m.fed, mat: m.mat };
+  }
+  const h = HIP[s.id];
+  return { tipo: 'hip', item: null, hips: [s.id], foraLC: h.foraLC, nenhuma: h.nenhuma, fed: h.fed };
+}
+function choose(it) {
+  sel = { tipo: it.tipo, id: it.id };
+  input.value = (it.tipo === 'item' ? it.id + ' — ' : '') + it.desc;
+  const p = perfilDe(sel);
+  const hipsTxt = p.hips.filter(h => !HIP[h].foraLC).map(h => HIP[h].nome);
+  $('item-chosen').innerHTML = it.tipo === 'item'
+    ? `<strong>Item ${it.id}</strong> · ${escapeHtml(it.desc)}<br><span class="chosen-hips">${hipsTxt.length ? 'Hipóteses legais: ' + escapeHtml(lista(hipsTxt)) : 'Nenhuma hipótese de retenção federal ou de INSS ligada a este item.'}</span>`
+    : `<strong>${escapeHtml(it.desc)}</strong> · ${escapeHtml(HIP[it.id].grupo)}${HIP[it.id].foraLC ? '' : '<br><span class="chosen-hips">Consulta pela hipótese legal: o ISS depende do item da LC 116 e não é avaliado.</span>'}`;
+  $('item-chosen').hidden = false;
+  $('f-item').classList.remove('has-error');
+  closeList();
+  syncConditionals();
+  if (consultado) calcular();
+}
+function resolverDigitado() {
+  if (sel) return true;
+  const txt = input.value.trim();
+  if (!txt) return false;
+  const m = txt.match(/^(\d{1,2})\s*[.,]?\s*(\d{1,2})(?!\d)/);
+  if (m) {
+    const code = m[1].padStart(2, '0') + '.' + m[2].padStart(2, '0');
+    const it = LISTA.find(x => x.tipo === 'item' && x.id === code);
+    if (it) { choose(it); return true; }
+  }
+  const achados = buscar(txt);
+  if (achados.length === 1) { choose(achados[0]); return true; }
+  return false;
+}
+input.addEventListener('blur', () => { setTimeout(() => { if (!sel) resolverDigitado(); }, 150); });
+input.addEventListener('focus', () => { if (sel) input.select(); renderList(); });
+input.addEventListener('input', () => { sel = null; $('item-chosen').hidden = true; renderList(); syncConditionals(); });
+input.addEventListener('keydown', e => {
+  const n = list.querySelectorAll('li[data-i]').length;
+  if (e.key === 'ArrowDown') { e.preventDefault(); if (list.hidden) renderList(); setActive(Math.min(activeIdx + 1, n - 1)); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); setActive(Math.max(activeIdx - 1, 0)); }
+  else if (e.key === 'Enter') { e.preventDefault(); if (activeIdx >= 0 && n) choose(resultados[activeIdx]); else if (!resolverDigitado() && n) choose(resultados[0]); }
+  else if (e.key === 'Escape') { closeList(); }
+});
+list.addEventListener('mousedown', e => { const li = e.target.closest('li[data-i]'); if (li) { e.preventDefault(); choose(resultados[+li.dataset.i]); } });
+document.addEventListener('click', e => { if (!e.target.closest('.combo')) closeList(); });
+
+/* ── Campos condicionais ─────────────────────────────────────────── */
+function syncConditionals() {
+  const p = perfilDe(sel);
+  const regime = $('regime').value, tomador = $('tomador').value, cessao = $('cessao').value;
+  const temCessao = cessao !== 'nao';
+  $('f-anexo').hidden = !(regime === 'simples' && temCessao);
+  $('f-cprb').hidden = !(['lucro', 'coop'].includes(regime) && temCessao);
+  $('f-mat').hidden = !(p && p.mat && !['pj', 'pjsn'].includes(tomador) && ['lucro', 'coop'].includes(regime));
+  const a3 = p && p.item && ART3[p.item];
+  const art6 = p && p.item && ART6_II.includes(p.item);
+  const semIss = !p || p.tipo === 'hip' || regime === 'mei';
+  $('f-mesmo').hidden = semIss || !!art6 || !!(a3 && a3.multi);
+  $('f-exec').hidden = semIss || !(a3 && !a3.tomador && !a3.multi && !art6);
+  $('exec-help').textContent = a3 ? `Neste item o ISS é devido ${a3.multi ? '' : 'no local '}${a3.local} (art. 3º, ${a3.inc}).` : '';
+
+  const inssH = p ? p.hips.filter(h => HIP[h].inss) : [];
+  $('cessao-help').textContent = !p ? 'Define a retenção de INSS.'
+    : inssH.length ? 'Hipótese de INSS: ' + lista(inssH.map(h => `${HIP[h].nome} (art. ${HIP[h].inss.art}, ${HIP[h].inss.inc}${HIP[h].inss.art === '112' ? ', só com cessão' : ''})`)) + '.'
+    : 'Nenhuma hipótese da IN 2.110/2022 ligada a esta seleção.';
+  $('tomador-help').textContent = tomador === 'fed' ? 'Aplica a retenção única da IN RFB 1.234/2012 (IR, CSLL, PIS e COFINS no mesmo DARF).'
+    : tomador === 'est' ? 'Retém IR pelas alíquotas da IN RFB 1.234/2012, quando o ente regulamentou (Tema 1.130 do STF).'
+    : tomador === 'pjsn' ? 'Tomador do Simples retém IR e INSS, mas não é obrigado a reter CSLL, PIS e COFINS.' : '';
+  $('regime-help').textContent = regime === 'simples' ? 'Dispensa de IR e CSRF depende de o prestador declarar a condição de optante.'
+    : regime === 'mei' ? 'MEI não sofre retenção de tributos federais nem de ISS.'
+    : regime === 'coop' ? 'Serviços pessoais dos associados: IR de 1,5% (RIR/2018, art. 719), qualquer que seja o serviço.' : '';
+}
+['regime', 'tomador', 'cessao'].forEach(id => $(id).addEventListener('change', () => { syncConditionals(); if (consultado) calcular(); }));
+['anexo', 'cprb', 'mat', 'mesmo', 'exec'].forEach(id => $(id).addEventListener('change', () => { if (consultado) calcular(); }));
+
+/* ── Motor de regras ─────────────────────────────────────────────── */
+function linha(o) { return Object.assign({ aliq: null, codigo: '—', fund: '' }, o); }
+const FED = [['ir', 'IRRF', 'Imposto de renda'], ['csll', 'CSLL', 'Contribuição social'], ['cofins', 'COFINS', ''], ['pis', 'PIS/Pasep', '']];
+const fedRow = (k, o) => { const [, nome, sub] = FED.find(f => f[0] === k); return linha(Object.assign({ key: k, nome, sub }, o)); };
+const hipTxt = hs => hs.map(h => HIP[h].nome + (HIP[h].ressalva ? ` (${HIP[h].ressalva})` : '')).join('; ');
+
+function consultar(inp) {
+  const p = inp.perfil;
+  const rows = [], atencao = [];
+  const pos2027 = inp.data >= '2027-01-01';
+  const simples = inp.regime === 'simples', mei = inp.regime === 'mei', coop = inp.regime === 'coop';
+  const privado = ['pj', 'pjsn'].includes(inp.tomador);
+  const irH = p.hips.filter(h => HIP[h].ir);
+  const pccH = p.hips.filter(h => HIP[h].pcc);
+  const inssH = p.hips.filter(h => HIP[h].inss);
+  const publi = irH.some(h => h === 'm-publi');
+  const confItem = !!p.c;
+
+  /* Federais */
+  if (mei || simples) {
+    const fund = mei ? 'MEI não sofre retenção de IR, CSLL, PIS e COFINS na fonte.'
+      : inp.tomador === 'fed' ? 'Optante pelo Simples Nacional: dispensa da retenção única (IN RFB 1.234/2012, art. 4º, XI; RIR/2018, art. 720, § 6º).'
+      : 'Optante pelo Simples Nacional: dispensa de retenção de IR e CSRF (LC 123/2006, art. 13; IN SRF 459/2004, art. 3º).';
+    FED.forEach(([k]) => rows.push(fedRow(k, { status: 'nao', fund })));
+    if (simples) atencao.push('A dispensa vale se o prestador comprovar a condição de optante (declaração do Anexo IV da IN 1.234/2012 para órgão federal; para PJ privada, declaração da IN SRF 459/2004). Sem ela, o tomador deve reter.');
+  }
+  else if (inp.tomador === 'fed' || inp.tomador === 'est') {
+    let cod = coop ? '8863' : (p.mat && inp.mat === 'sim') ? '6147' : (p.fed || '6190');
+    const t = IN1234[cod];
+    const foraConf = p.tipo === 'hip' && p.foraLC && cod === '6190';
+    const fundBase = `IN RFB 1.234/2012, Anexo I — ${t.desc}.` + (foraConf ? ' Para esta operação, confirme o enquadramento no Anexo I e as dispensas do art. 4º.' : '');
+    if (inp.tomador === 'fed') {
+      FED.forEach(([k]) => {
+        if (pos2027 && (k === 'pis' || k === 'cofins')) {
+          rows.push(fedRow(k, { status: 'confirmar', aliq: t[k],
+            fund: 'A partir de 2027 o PIS e a COFINS são substituídos pela CBS (LC 214/2025). Confirme a composição da retenção única da IN 1.234 vigente na data do pagamento.' }));
+        } else if (t[k] === 0) {
+          rows.push(fedRow(k, { status: 'nao', fund: `IN RFB 1.234/2012, Anexo I — ${t.desc}: sem parcela de ${k.toUpperCase()}.` }));
+        } else {
+          rows.push(fedRow(k, { status: foraConf ? 'confirmar' : 'reter', aliq: t[k],
+            codigo: pos2027 ? `DARF ${cod} (confirmar código em 2027)` : `DARF ${cod} — único para os 4 tributos`, fund: fundBase }));
+        }
+      });
+      if (publi) atencao.push('Órgão federal retém sobre a remuneração da agência; valores de veiculação ficam fora da base (SC Cosit 186/2018).');
+    } else {
+      rows.push(fedRow('ir', t.ir ? { status: foraConf ? 'confirmar' : 'reter', aliq: t.ir, codigo: 'Retido pelo próprio ente (receita do estado/município)',
+        fund: 'CF, arts. 157, I e 158, I; Tema 1.130 do STF; IN RFB 1.234/2012 com redação da IN RFB 2.145/2023 — alíquotas do Anexo I.' }
+        : { status: 'nao', fund: `IN RFB 1.234/2012, Anexo I — ${t.desc}: sem parcela de IR.` }));
+      atencao.push('Estados e municípios aplicam a retenção de IR se tiverem regulamentado a adesão à IN 1.234/2012. Confirme o decreto do ente contratante.');
+      ['csll', 'cofins', 'pis'].forEach(k => rows.push(fedRow(k, { status: 'nao',
+        fund: 'Estados, DF e municípios só retêm CSLL, PIS e COFINS se tiverem convênio com a RFB (Lei 10.833/2003, art. 33).' })));
+    }
+  }
+  else {
+    /* IR — tomador privado */
+    if (coop) {
+      rows.push(fedRow('ir', { status: 'reter', aliq: 1.5, codigo: 'DARF 3280',
+        fund: 'Hipótese: serviços pessoais prestados por associados de cooperativa de trabalho ou associação profissional — RIR/2018, art. 719. O imposto retido é compensado pela entidade quando paga aos associados.' }));
+    } else if (!irH.length) {
+      rows.push(fedRow('ir', { status: 'nao', fund: p.nenhuma || 'Nenhuma hipótese de retenção de IR entre pessoas jurídicas (RIR/2018, arts. 714 a 719; Lei 10.833/2003, art. 29).' }));
+    } else {
+      const cfgs = [...new Map(irH.map(h => [HIP[h].ir.aliq + '|' + HIP[h].ir.cod + '|' + (HIP[h].ir.modo || 'reter'), HIP[h].ir])).values()];
+      if (cfgs.length > 1) {
+        rows.push(fedRow('ir', { status: 'confirmar',
+          fund: `O serviço pode se enquadrar em hipóteses com regras diferentes: ${irH.map(h => `${HIP[h].nome} (${fmtPct(HIP[h].ir.aliq)}, ${HIP[h].ir.base})`).join('; ')}. Confirme a natureza do contrato.` }));
+      } else {
+        const ir = cfgs[0];
+        const modo = ir.modo || 'reter';
+        const status = modo === 'prestador' ? 'prestador' : (modo === 'confirmar' || confItem) ? 'confirmar' : 'reter';
+        rows.push(fedRow('ir', { status, aliq: ir.aliq, codigo: ir.cod, fund: `Hipótese: ${hipTxt(irH)} — ${ir.base}.` + (ir.obs ? ' ' + ir.obs : '') }));
+      }
+    }
+    /* CSRF — tomador privado */
+    if (inp.tomador === 'pjsn' && (pccH.length || coop)) {
+      ['csll', 'cofins', 'pis'].forEach(k => rows.push(fedRow(k, { status: 'nao',
+        fund: 'Tomador optante pelo Simples Nacional não é obrigado a reter CSLL, PIS e COFINS (IN SRF 459/2004, art. 1º, § 6º).' })));
+    } else if (pccH.length) {
+      const comp = pos2027 ? { csll: 1 } : { csll: 1, cofins: 3, pis: 0.65 };
+      const fundH = `Hipótese: ${hipTxt(pccH)} — ${HIP[pccH[0]].pcc}` + (pos2027 ? ', com redação da LC 214/2025.' : '.');
+      ['csll', 'cofins', 'pis'].forEach(k => {
+        if (!(k in comp)) {
+          rows.push(fedRow(k, { status: 'nao', fund: 'Retenção extinta para pagamentos a partir de 01/01/2027 (LC 214/2025, art. 509, que altera os arts. 30 e 31 da Lei 10.833/2003).' }));
+        } else if (coop && k === 'csll') {
+          rows.push(fedRow(k, { status: 'nao', fund: 'Não há retenção de CSLL sobre atos cooperados (IN SRF 459/2004, art. 5º).' }));
+        } else {
+          rows.push(fedRow(k, { status: confItem ? 'confirmar' : 'reter', aliq: comp[k],
+            codigo: pos2027 ? 'DARF 5987' : 'DARF 5952 (CSLL+COFINS+PIS)', fund: fundH }));
+        }
+      });
+    } else {
+      const fund = publi ? 'Propaganda e publicidade não constam do art. 30 da Lei 10.833/2003 (SC SRRF 9ª RF 225/2004).'
+        : p.nenhuma || 'Nenhuma hipótese do art. 30 da Lei 10.833/2003 (lista fechada, detalhada no art. 1º da IN SRF 459/2004).';
+      ['csll', 'cofins', 'pis'].forEach(k => rows.push(fedRow(k, { status: 'nao', fund })));
+    }
+  }
+
+  /* INSS — IN RFB 2.110/2022 */
+  const inss = o => linha(Object.assign({ key: 'inss', nome: 'INSS', sub: 'Contribuição previdenciária' }, o));
+  if (mei) {
+    rows.push(inss({ status: 'nao', fund: 'MEI não sofre retenção. Se o MEI for contratado para hidráulica, eletricidade, pintura, alvenaria, carpintaria ou manutenção de veículos, o contratante recolhe a CPP de 20% (LC 123/2006, art. 18-B).' }));
+  } else if (inp.cessao === 'nao') {
+    rows.push(inss({ status: 'nao', fund: 'Sem cessão de mão de obra ou empreitada não há retenção (Lei 8.212/1991, art. 31).' }));
+  } else if (simples && inp.anexo !== 'sim') {
+    rows.push(inss({ status: 'nao', fund: 'Optante pelo Simples tributado nos Anexos III ou V recolhe a CPP dentro do DAS: não há retenção. Só o Anexo IV sofre retenção (LC 123/2006, art. 18, § 5º-C).' }));
+  } else {
+    const aplicaveis = inssH.filter(h => HIP[h].inss.art === '111' || inp.cessao === 'cessao');
+    const aliq = (!simples && inp.cprb === 'sim') ? 3.5 : 11;
+    const codigo = 'DCTFWeb (EFD-Reinf R-2010 / R-2020)';
+    const cprbTxt = aliq === 3.5 ? '; Lei 12.546/2011, art. 7º, § 6º (CPRB)' : '';
+    if (aplicaveis.length) {
+      rows.push(inss({ status: confItem ? 'confirmar' : 'reter', aliq, codigo,
+        fund: `Hipótese: ${aplicaveis.map(h => `${HIP[h].nome} (IN RFB 2.110/2022, art. ${HIP[h].inss.art}, ${HIP[h].inss.inc})`).join('; ')} — Lei 8.212/1991, art. 31${cprbTxt}.` + (aplicaveis.some(h => HIP[h].ressalva) ? ' Ressalva: ' + aplicaveis.filter(h => HIP[h].ressalva).map(h => HIP[h].ressalva).join('; ') + '.' : '') }));
+      atencao.push('INSS é dispensado quando a contratada não tem empregados, o serviço é prestado pessoalmente pelo titular ou sócio e o faturamento do mês anterior não passa de 2× o teto do salário de contribuição; ou em profissão regulamentada prestada pessoalmente pelos sócios (IN RFB 2.110/2022, art. 115).');
+    } else if (inssH.length) {
+      rows.push(inss({ status: 'nao', fund: `${lista(inssH.map(h => HIP[h].nome))} está no art. 112 da IN RFB 2.110/2022, que só se aplica a cessão de mão de obra, não a empreitada.` }));
+    } else {
+      rows.push(inss({ status: 'confirmar', aliq, codigo,
+        fund: 'Nenhuma hipótese dos arts. 111 e 112 da IN RFB 2.110/2022 ligada a esta seleção. As listas são exaustivas (art. 113): se o serviço não se encaixar em nenhuma, não há retenção. Pesquise pela atividade para conferir.' }));
+    }
+  }
+
+  /* ISS — LC 116/2003, arts. 3º e 6º */
+  const iss = o => linha(Object.assign({ key: 'iss', nome: 'ISS', sub: 'Imposto municipal', codigo: 'Guia do município' }, o));
+  if (mei) {
+    rows.push(iss({ status: 'nao', codigo: '—', fund: 'MEI recolhe ISS em valor fixo no DAS-MEI: não há retenção.' }));
+  } else if (p.tipo === 'hip') {
+    rows.push(p.foraLC
+      ? iss({ status: 'nao', codigo: '—', fund: `Operação fora da Lista de Serviços da LC 116/2003 (na NFS-e Nacional, código ${p.foraLC}): não há ISS.` })
+      : iss({ status: 'confirmar', codigo: '—', fund: 'Consulta feita pela hipótese legal. Para avaliar o ISS, consulte pelo item da LC 116.' }));
+  } else {
+    const a3 = ART3[p.item];
+    const art6 = ART6_II.includes(p.item);
+    const local = a3 ? `ISS devido ${a3.multi ? '' : 'no local '}${a3.local} (LC 116/2003, art. 3º, ${a3.inc}).` : 'ISS devido no município do estabelecimento prestador (LC 116/2003, art. 3º, caput).';
+    if (art6) {
+      rows.push(iss({ status: 'reter', codigo: a3 ? 'Guia do município do local da prestação' : 'Guia do município',
+        fund: `${local} O tomador PJ é responsável pelo ISS deste item, ainda que imune ou isento (art. 6º, § 2º, II).` }));
+    } else if (a3 && a3.multi) {
+      rows.push(iss({ status: 'confirmar', fund: `${local} A responsabilidade depende da lei de cada município envolvido.` }));
+    } else if (a3) {
+      const noTomador = a3.tomador || inp.exec === 'tomador';
+      if (noTomador && inp.mesmoMun === 'sim') {
+        rows.push(iss({ status: 'confirmar', fund: `${local} Prestador e tomador no mesmo município: a retenção depende da lei local de substituição tributária (art. 6º, caput).` }));
+      } else if (noTomador) {
+        rows.push(iss({ status: 'confirmar', codigo: 'Guia do município do tomador',
+          fund: `${local} Como o serviço ocorre no município do tomador e o prestador é de fora, a lei municipal costuma atribuir a retenção ao tomador (art. 6º, caput) — confirme na legislação local.` }));
+      } else {
+        rows.push(iss({ status: 'nao', fund: `${local} Como o serviço não ocorre no município do tomador, o ISS é recolhido pelo prestador ao município onde o serviço foi executado.` }));
+      }
+    } else if (inp.mesmoMun === 'sim') {
+      rows.push(iss({ status: 'confirmar', fund: `${local} Prestador e tomador no mesmo município: a retenção depende da lei local de substituição tributária (art. 6º, caput).` }));
+    } else {
+      rows.push(iss({ status: 'nao', fund: `${local} Prestador estabelecido em outro município: em regra o ISS é do município do prestador e não há retenção. Exceção: se o município do tomador exigir cadastro de prestadores de fora (CPOM) e o prestador não estiver cadastrado, o tomador retém.` }));
+    }
+    if (a3 && a3.obs) atencao.push(`ISS: ${a3.obs}`);
+    if (ART3_ADI[p.item]) atencao.push(`ISS: o inciso ${ART3_ADI[p.item]} do art. 3º (local do tomador) foi declarado inconstitucional (ADI 5.835 e 5.862). O imposto volta a ser devido no estabelecimento prestador.`);
+    if (p.item === '12.13') atencao.push('ISS: o 12.13 (produção de eventos) é a única exceção do item 12 ao inciso XVIII — segue a regra do estabelecimento prestador.');
+    if (simples && rows[rows.length - 1].status !== 'nao') atencao.push('ISS de prestador do Simples: retém-se a alíquota efetiva informada na nota; sem ela, a maior alíquota de ISS do anexo (LC 123/2006, art. 21, § 4º).');
+  }
+
+  if (p.c) atencao.unshift(p.c);
+  if (p.obs) atencao.unshift(p.obs);
+  return { rows, atencao, pos2027 };
+}
+
+/* ── Validação e render ──────────────────────────────────────────── */
+let consultado = false;
+function lerForm() {
+  return {
+    perfil: perfilDe(sel), data: hoje(), tomador: $('tomador').value, regime: $('regime').value,
+    cessao: $('cessao').value, anexo: $('anexo').value, cprb: $('cprb').value,
+    mat: $('f-mat').hidden ? 'nao' : $('mat').value,
+    mesmoMun: $('mesmo').value, exec: $('exec').value
+  };
+}
+function validar(inp) {
+  let ok = true;
+  const set = (id, bad) => { $(id).classList.toggle('has-error', bad); if (bad) ok = false; };
+  set('f-item', !inp.perfil);
+  return ok;
+}
+const STATUS_TXT = { reter: 'Retido', nao: 'Não retido', confirmar: 'Confirmar', prestador: 'Prestador recolhe' };
+/* Sem campo de data: as regras seguem a data de hoje (CSRF muda em 01/01/2027) */
+function hoje() { const d = new Date(), pad = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
+
+function calcular() {
+  const inp = lerForm();
+  if (!validar(inp)) {
+    const first = document.querySelector('.field.has-error input, .field.has-error select');
+    if (first) { first.closest('.field').scrollIntoView({ behavior: 'smooth', block: 'center' }); if (!consultado) first.focus({ preventScroll: true }); }
+    return;
+  }
+  consultado = true;
+  $('btn').textContent = 'Atualizar consulta';
+  const res = consultar(inp);
+  const p = inp.perfil;
+  const txt = STATUS_TXT;
+
+  const selLabel = p.tipo === 'item' ? `Item ${p.item}` : HIP[sel.id].nome;
+  const tomLabel = { pj: 'Tomador PJ privada', pjsn: 'Tomador PJ do Simples', fed: 'Tomador órgão federal', est: 'Tomador estado/município' }[inp.tomador];
+  const regLabel = { lucro: 'Prestador Lucro Presumido/Real', simples: 'Prestador Simples Nacional', mei: 'Prestador MEI', coop: 'Prestador cooperativa/associação' }[inp.regime];
+  $('result-tags').innerHTML = [selLabel, tomLabel, regLabel, res.pos2027 ? 'Regras de 2027' : 'Regras de 2026 (até 31/12)']
+    .map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('');
+
+  const grupo = st => res.rows.filter(x => x.status === st).map(x => x.nome);
+  const reter = grupo('reter'), conf = grupo('confirmar'), prest = grupo('prestador');
+  let titulo, cls;
+  if (reter.length) { titulo = 'Retido: ' + lista(reter); cls = 'sim'; }
+  else if (conf.length) { titulo = 'Retenção a confirmar'; cls = 'conf'; }
+  else { titulo = 'Sem retenção na fonte'; cls = 'nao'; }
+  const linhas = [];
+  if (conf.length && reter.length) linhas.push(`A confirmar: ${lista(conf)}.`);
+  else if (conf.length) linhas.push(`Depende de confirmação: ${lista(conf)}.`);
+  if (prest.length) linhas.push('IR recolhido pelo próprio prestador, não descontado pelo tomador.');
+  const hipsAplic = p.hips.filter(h => !HIP[h].foraLC);
+  const enq = hipsAplic.length
+    ? `<div class="enq"><div class="enq-title">Enquadramento legal</div>${hipsAplic.map(h => `<div class="enq-item"><strong>${escapeHtml(HIP[h].nome)}</strong> <span>· ${escapeHtml(HIP[h].grupo)}</span>${HIP[h].ressalva ? `<div class="enq-ress">${escapeHtml(HIP[h].ressalva)}</div>` : ''}</div>`).join('')}</div>`
+    : `<div class="enq"><div class="enq-title">Enquadramento legal</div><div class="enq-item">${p.foraLC ? 'Operação fora da LC 116 sem hipótese de retenção entre pessoas jurídicas privadas.' : 'Nenhuma hipótese de retenção federal ou de INSS ligada a esta seleção.'}</div></div>`;
+  $('resumo').innerHTML = `<div class="resumo ${cls}"><div class="resumo-title">${escapeHtml(titulo)}</div>${linhas.map(l => `<div class="resumo-sub">${escapeHtml(l)}</div>`).join('')}${enq}</div>`;
+
+  $('alerts').innerHTML = res.atencao.length
+    ? `<div class="alert alert-warning" role="note"><div><div class="alert-title">${conf.length ? 'Antes de concluir, confirme' : 'Pontos de atenção'}</div><ul>${res.atencao.map(a => `<li>${escapeHtml(a)}</li>`).join('')}</ul></div></div>` : '';
+
+  const head = `<div class="ret-row head" role="row"><span role="columnheader">Tributo</span><span role="columnheader">Situação</span><span role="columnheader" style="text-align:right">Alíquota</span><span role="columnheader">Recolhimento</span></div>`;
+  const body = res.rows.map(x => `<div class="ret-row${x.status === 'nao' ? ' muted' : ''}" role="row">
+      <div class="ret-name" role="cell">${x.nome}${x.sub ? `<small>${x.sub}</small>` : ''}</div>
+      <div class="cell-status" role="cell"><span class="badge ${x.status}">${txt[x.status]}</span></div>
+      <div class="ret-num cell-aliq" role="cell"><span class="mobile-label">Alíquota</span>${x.aliq != null ? fmtPct(x.aliq) : '—'}</div>
+      <div class="ret-code cell-code" role="cell"><span class="mobile-label">Recolhimento</span>${escapeHtml(x.codigo)}</div>
+      <div class="ret-detail" role="cell"><span class="fund">${escapeHtml(x.fund)}</span></div>
+    </div>`).join('');
+  $('tabela').innerHTML = head + body;
+  const sec = $('resultado');
+  const firstTime = sec.hidden;
+  sec.hidden = false;
+  if (firstTime) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+$('form').addEventListener('submit', e => { e.preventDefault(); resolverDigitado(); closeList(); calcular(); });
+syncConditionals();
+</script>
+</body>
+</html>

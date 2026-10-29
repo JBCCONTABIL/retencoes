@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Consultor de Retenções — JBC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --brand-01: #990024; --brand-02: #CC143F; --brand-03: #FF003C;
+    --dark-3: #2B2E33; --dark-2: #565B66; --dark-1: #6B768A;
+    --mid-grey: #D6D6D6; --light-3: #EFEFEF; --light-2: #F5F5F5; --light-1: #F9F9F9; --white: #FFFFFF;
+    --positive: #008542; --warning: #E58A00; --negative: #CC2200; --info: #295FCC;
+    --font: 'Lato', Arial, sans-serif;
+    --grid-gutter: 16px; --grid-margin-sm: 16px; --grid-margin-md: 32px;
+    --radius-sm: 2px; --radius-md: 4px;
+    --shadow-card: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font); font-size: 14px; color: var(--dark-3); background: var(--light-2); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+  :focus-visible { outline: 2px solid var(--info); outline-offset: 2px; }
+
+  /* Header */
+  .header { background: var(--white); border-bottom: 2px solid var(--brand-01); height: 56px; display: flex; align-items: center; padding: 0 var(--grid-margin-md); position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(153,0,36,.10); }
+  .header-logo { display: flex; align-items: center; text-decoration: none; }
+  .header-logo img { height: 36px; display: block; }
+  .header-divider { width: 1px; height: 20px; background: var(--mid-grey); margin: 0 12px; }
+  .header-module { font-size: 12px; color: var(--dark-1); }
+
+  /* Layout */
+  .page { max-width: 960px; margin: 0 auto; padding: 40px var(--grid-margin-md) 80px; }
+  .page-header { margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid var(--mid-grey); }
+  .page-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--brand-01); margin-bottom: 8px; }
+  .page-title { font-size: 24px; font-weight: 300; line-height: 1.2; margin-bottom: 6px; letter-spacing: -0.3px; }
+  .page-title strong { font-weight: 700; }
+  .page-desc { font-size: 13px; color: var(--dark-1); line-height: 1.5; max-width: 680px; }
+
+  /* Card / form */
+  .card { background: var(--white); border: 1px solid var(--mid-grey); border-radius: var(--radius-md); box-shadow: var(--shadow-card); }
+  .card-section { padding: 24px; border-bottom: 1px solid var(--light-3); }
+  .card-section:last-child { border-bottom: none; }
+  .card-section-title { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dark-1); margin-bottom: 16px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--grid-gutter); margin-bottom: 16px; }
+  .form-row:last-child { margin-bottom: 0; }
+  .form-row.full { grid-template-columns: 1fr; }
+  .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .field[hidden] { display: none; }
+  .field label, .field .label { font-size: 12px; font-weight: 700; color: var(--dark-2); letter-spacing: 0.02em; }
+  .field label .required { color: var(--brand-01); margin-left: 2px; }
+  .field input, .field select {
+    font-family: var(--font); font-size: 14px; color: var(--dark-3); background: var(--light-1);
+    border: none; border-bottom: 2px solid var(--mid-grey); border-radius: 0; padding: 10px 12px; height: 40px;
+    outline: none; transition: border-color 0.15s; width: 100%; appearance: none; -webkit-appearance: none;
+  }
+  .field select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B768A' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; cursor: pointer;
+  }
+  .field input:focus, .field select:focus { border-bottom-color: var(--brand-01); background: var(--white); }
+  .field input::placeholder { color: var(--dark-1); }
+  .field-helper { font-size: 11px; color: var(--dark-1); line-height: 1.45; }
+  .field-error { font-size: 11px; color: var(--negative); display: none; }
+  .field.has-error input, .field.has-error select { border-bottom-color: var(--negative); }
+  .field.has-error .field-error { display: block; }
+
+  /* Segmented control */
+  .segmented { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--mid-grey); border-radius: var(--radius-sm); overflow: hidden; }
+  .segmented input { position: absolute; opacity: 0; pointer-events: none; }
+  .segmented label { display: flex; flex-direction: column; gap: 2px; padding: 10px 14px; cursor: pointer; background: var(--light-1); font-size: 13px; font-weight: 700; color: var(--dark-2); letter-spacing: 0; border-right: 1px solid var(--mid-grey); }
+  .segmented label:last-of-type { border-right: none; }
+  .segmented label span { font-size: 11px; font-weight: 400; color: var(--dark-1); }
+  .segmented input:checked + label { background: var(--white); color: var(--brand-01); box-shadow: inset 0 -3px 0 var(--brand-01); }
+  .segmented input:focus-visible + label { outline: 2px solid var(--info); outline-offset: -2px; }
+
+  /* Combobox */
+  .combo { position: relative; }
+  .combo-list { position: absolute; left: 0; right: 0; top: 100%; z-index: 20; background: var(--white); border: 1px solid var(--mid-grey); border-top: none; box-shadow: 0 6px 16px rgba(0,0,0,.10); max-height: 320px; overflow-y: auto; list-style: none; }
+  .combo-list[hidden] { display: none; }
+  .combo-list li { padding: 10px 12px; cursor: pointer; display: grid; grid-template-columns: 48px 1fr; gap: 8px; font-size: 13px; line-height: 1.4; border-bottom: 1px solid var(--light-3); }
+  .combo-list li:last-child { border-bottom: none; }
+  .combo-list li .code { font-weight: 700; color: var(--brand-01); font-variant-numeric: tabular-nums; }
+  .combo-list li .code.hip { font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--info); padding-top: 2px; }
+  .combo-list li small { display: block; font-size: 11px; color: var(--dark-1); margin-top: 2px; }
+  .combo-list li.group { display: block; cursor: default; background: var(--light-3); font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dark-2); padding: 6px 12px; }
+  .combo-list li.group:hover { background: var(--light-3); }
+  .chosen-hips { color: var(--dark-1); }
+  .enq { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--light-3); }
+  .enq-title { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dark-1); margin-bottom: 6px; }
+  .enq-item { font-size: 13px; line-height: 1.5; margin-bottom: 4px; }
+  .enq-item span { color: var(--dark-1); font-size: 12px; }
+  .enq-ress { font-size: 12px; color: var(--dark-2); }
+  .combo-list li[aria-selected="true"], .combo-list li:hover { background: var(--light-2); }
+  .combo-list li.empty { display: block; color: var(--dark-1); cursor: default; }
+  .combo-list mark { background: #FBE7EC; color: inherit; }
+  .item-chosen { margin-top: 8px; padding: 10px 12px; background: var(--light-2); border-left: 3px solid var(--brand-01); font-size: 12px; line-height: 1.5; color: var(--dark-2); }
+  .item-chosen strong { color: var(--dark-3); }
+  .item-chosen[hidden] { display: none; }
+
+  /* Buttons */
+  .btn-primary { font-family: var(--font); font-size: 14px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--white); background: var(--brand-01); border: none; padding: 0 32px; height: 48px; cursor: pointer; border-radius: var(--radius-sm); transition: background 0.15s; width: 100%; }
+  .btn-primary:hover { background: var(--brand-02); }
+  .btn-primary:active { background: var(--brand-03); }
+
+  /* Alerts */
+  .alert { display: flex; gap: 10px; align-items: flex-start; padding: 12px 16px; border-radius: var(--radius-md); font-size: 13px; line-height: 1.5; margin-bottom: 16px; color: var(--dark-3); }
+  .alert-title { font-weight: 700; margin-bottom: 4px; }
+  .alert ul { margin: 4px 0 0 18px; }
+  .alert li { margin-bottom: 4px; }
+  .alert-info { background: #EEF3FB; border-left: 3px solid var(--info); }
+  .alert-warning { background: #FEF6E7; border-left: 3px solid var(--warning); }
+
+  /* Result */
+  #resultado { margin-top: 32px; }
+  #resultado[hidden] { display: none; }
+  .result-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .tag { display: inline-flex; align-items: center; gap: 6px; background: var(--light-3); border: 1px solid var(--mid-grey); color: var(--dark-2); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 10px; border-radius: 2px; }
+  .resumo { background: var(--white); border: 1px solid var(--mid-grey); border-left: 4px solid var(--dark-1); border-radius: var(--radius-md); padding: 16px 20px; margin-bottom: 16px; box-shadow: var(--shadow-card); }
+  .resumo.sim { border-left-color: var(--brand-01); }
+  .resumo.conf { border-left-color: var(--warning); }
+  .resumo.nao { border-left-color: var(--positive); }
+  .resumo-title { font-size: 20px; font-weight: 700; line-height: 1.3; }
+  .resumo.sim .resumo-title { color: var(--brand-01); }
+  .resumo-sub { font-size: 13px; color: var(--dark-2); margin-top: 6px; line-height: 1.5; }
+  .section-label { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dark-1); margin-bottom: 12px; }
+
+  .ret-table { border: 1px solid var(--mid-grey); border-radius: var(--radius-md); background: var(--white); overflow: hidden; margin-bottom: 24px; }
+  .ret-row { display: grid; grid-template-columns: 140px 150px 80px 1fr; gap: 12px; align-items: start; padding: 14px 16px; border-bottom: 1px solid var(--light-3); }
+  .ret-row:last-child { border-bottom: none; }
+  .ret-row.head { background: var(--light-3); padding: 10px 16px; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--dark-2); }
+  .ret-name { font-weight: 700; font-size: 14px; }
+  .ret-name small { display: block; font-weight: 400; font-size: 11px; color: var(--dark-1); margin-top: 2px; }
+  .ret-num { font-variant-numeric: tabular-nums; text-align: right; font-size: 14px; }
+  .ret-num.big { font-weight: 700; }
+  .ret-detail { grid-column: 1 / -1; font-size: 12px; color: var(--dark-2); line-height: 1.5; margin-top: -4px; }
+  .ret-detail .fund { color: var(--dark-1); }
+  .ret-code { font-size: 12px; color: var(--dark-2); line-height: 1.4; }
+  .ret-row.muted .ret-name, .ret-row.muted .ret-num { color: var(--dark-1); }
+  .mobile-label { display: none; }
+
+  .badge { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 3px 8px; border-radius: 2px; white-space: nowrap; }
+  .badge.reter { background: #F7E5E9; color: var(--brand-01); }
+  .badge.nao { background: var(--light-3); color: var(--dark-2); }
+  .badge.confirmar { background: #FEF0D9; color: #8A5300; }
+  .badge.dispensada { background: #E3F2EA; color: var(--positive); }
+  .badge.prestador { background: #EEF3FB; color: var(--info); }
+
+  .foot-note { font-size: 11px; color: var(--dark-1); line-height: 1.6; margin-top: 8px; }
+  .foot-note a { color: var(--info); }
+
+  /* Responsivo */
+  @media (max-width: 1055px) {
+    .ret-row { grid-template-columns: 120px 140px 72px 1fr; }
+  }
+  @media (max-width: 671px) {
+    .header { padding: 0 var(--grid-margin-sm); }
+    .header-logo img { height: 32px; }
+    .page { padding: 24px var(--grid-margin-sm) 64px; }
+    .page-title { font-size: 22px; }
+    .card-section { padding: 16px; }
+    .form-row { grid-template-columns: 1fr; }
+    .segmented { grid-template-columns: 1fr; }
+    .segmented label { border-right: none; border-bottom: 1px solid var(--mid-grey); }
+    .segmented label:last-of-type { border-bottom: none; }
+    .ret-row.head { display: none; }
+    .ret-row { grid-template-columns: 1fr auto; gap: 6px 12px; }
+    .ret-row > .cell-status { grid-column: 2; grid-row: 1; justify-self: end; }
+    .ret-row > .cell-aliq, .ret-row > .cell-code { grid-column: 1 / -1; display: flex; justify-content: space-between; text-align: right; }
+    .mobile-label { display: inline; font-size: 11px; font-weight: 700; color: var(--dark-1); text-transform: uppercase; letter-spacing: 0.06em; text-align: left; }
+    .ret-detail { margin-top: 4px; }
+  }
+</style>
+</head>
+<body>
+<header class="header" role="banner">
+  <a class="header-logo" href="#" aria-label="JBC Assessoria Contábil"><img src="__LOGO__" alt="JBC Assessoria Contábil"></a>
+  <div class="header-divider" aria-hidden="true"></div>
+  <span class="header-module">Micro Sistemas</span>
+</header>
+
+<main class="page">
+  <div class="page-header">
+    <div class="page-eyebrow">Departamento Fiscal</div>
+    <h1 class="page-title">Consultor de <strong>Retenções</strong></h1>
+    <p class="page-desc">Informe o serviço e as partes da operação para saber quais tributos são retidos na fonte, com alíquota de referência, código de recolhimento e fundamento legal. Cobre IRRF, CSLL, PIS, COFINS, INSS e ISS para tomador PJ privada ou órgão público.</p>
+  </div>
+
+  <form class="card" id="form" novalidate>
+    <div class="card-section">
+      <div class="card-section-title">Serviço</div>
+      <div class="form-row full">
+        <div class="field" id="f-item">
+          <label for="item-input">Serviço ou operação<span class="required" aria-hidden="true">*</span></label>
+          <div class="combo">
+            <input id="item-input" type="text" autocomplete="off" placeholder="Código da LC 116 ou nome da atividade (ex.: 17.06, contabilidade, locação, telemarketing)"
+                   role="combobox" aria-expanded="false" aria-controls="item-list" aria-autocomplete="list">
+            <ul id="item-list" class="combo-list" role="listbox" hidden></ul>
+          </div>
+          <span class="field-helper">Busca nos itens da LC 116 e também nas hipóteses legais de retenção, o que cobre operações fora da lista (locação, royalties, mercadorias).</span>
+          <div class="item-chosen" id="item-chosen" hidden></div>
+          <span class="field-error" id="item-error">Nada selecionado. Digite o código (ex.: 15.01) ou escolha uma opção da lista.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-section">
+      <div class="card-section-title">Operação</div>
+      <div class="form-row">
+        <div class="field" id="f-tomador">
+          <label for="tomador">Tomador do serviço<span class="required" aria-hidden="true">*</span></label>
+          <select id="tomador">
+            <option value="pj">Pessoa jurídica de direito privado</option>
+            <option value="pjsn">Pessoa jurídica optante pelo Simples Nacional</option>
+            <option value="fed">Órgão ou entidade da administração pública federal</option>
+            <option value="est">Estado, DF ou município (adm. direta, autarquia, fundação)</option>
+          </select>
+          <span class="field-helper" id="tomador-help"></span>
+        </div>
+        <div class="field" id="f-regime">
+          <label for="regime">Regime tributário do prestador<span class="required" aria-hidden="true">*</span></label>
+          <select id="regime">
+            <option value="lucro">Lucro Presumido ou Lucro Real</option>
+            <option value="simples">Simples Nacional (ME/EPP)</option>
+            <option value="mei">MEI</option>
+            <option value="coop">Cooperativa de trabalho ou associação profissional</option>
+          </select>
+          <span class="field-helper" id="regime-help"></span>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field" id="f-cessao">
+          <label for="cessao">Forma de contratação do serviço</label>
+          <select id="cessao">
+            <option value="nao">Sem cessão de mão de obra nem empreitada</option>
+            <option value="cessao">Cessão de mão de obra</option>
+            <option value="empreitada">Empreitada</option>
+          </select>
+          <span class="field-helper" id="cessao-help">Define a retenção de INSS.</span>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field" id="f-anexo" hidden>
+          <label for="anexo">Atividade tributada no Anexo IV do Simples?</label>
+          <select id="anexo">
+            <option value="nao">Não (Anexos III ou V)</option>
+            <option value="sim">Sim (Anexo IV)</option>
+          </select>
+          <span class="field-helper">Só o Anexo IV recolhe a CPP fora do DAS e por isso sofre retenção de INSS.</span>
+        </div>
+        <div class="field" id="f-cprb" hidden>
+          <label for="cprb">Prestador contribui pela CPRB (desoneração da folha)?</label>
+          <select id="cprb">
+            <option value="nao">Não</option>
+            <option value="sim">Sim</option>
+          </select>
+          <span class="field-helper">Empresa na CPRB sofre retenção de INSS de 3,5% em vez de 11%.</span>
+        </div>
+        <div class="field" id="f-mat" hidden>
+          <label for="mat">Há fornecimento de materiais discriminado na nota?</label>
+          <select id="mat">
+            <option value="nao">Não</option>
+            <option value="sim">Sim</option>
+          </select>
+          <span class="field-helper">Com materiais discriminados, o órgão público aplica o código 6147 (5,85%) em vez de 6190 (9,45%).</span>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field" id="f-mesmo">
+          <label for="mesmo">Prestador estabelecido no mesmo município do tomador?</label>
+          <select id="mesmo">
+            <option value="nao">Não</option>
+            <option value="sim">Sim</option>
+          </select>
+          <span class="field-helper">Define a retenção de ISS.</span>
+        </div>
+        <div class="field" id="f-exec" hidden>
+          <label for="exec">Onde o serviço é executado?</label>
+          <select id="exec">
+            <option value="tomador">No município do tomador</option>
+            <option value="outro">Em outro município</option>
+          </select>
+          <span class="field-helper" id="exec-help"></span>
+        </div>
+      </div>
+    </div>
+    <div class="card-section">
+      <button type="submit" class="btn-primary" id="btn">Consultar retenções</button>
+    </div>
+  </form>
+
+  <section id="resultado" hidden aria-live="polite">
+    <div class="result-head" id="result-tags"></div>
+    <div id="resumo"></div>
+    <div id="alerts"></div>
+    <div class="section-label">Quadro de retenções</div>
+    <div class="ret-table" id="tabela" role="table" aria-label="Quadro de retenções"></div>
+    <p class="foot-note">
+      O motor parte das listas fechadas de hipóteses legais: RIR/2018, arts. 714, § 1º (40 serviços profissionais), 716, 718 e 719; Lei 10.833/2003, arts. 29 e 30, com o art. 1º da IN SRF 459/2004; IN RFB 1.234/2012 (órgãos públicos); Lei 8.212/1991, art. 31, com os arts. 111 a 115 da IN RFB 2.110/2022 (INSS). Cada item da LC 116 é ligado às hipóteses em que se enquadra; ISS pelos arts. 3º e 6º, § 2º, II da LC 116/2003 (incisos da LC 157/2016 declarados inconstitucionais nas ADI 5.835 e 5.862 seguem a redação anterior; inciso III com redação da LC 218/2025). A natureza efetiva do contrato prevalece sobre o código do item: onde o enquadramento varia, o quadro mostra "Confirmar" em vez de cravar. Retenções de valor igual ou inferior a R$ 10,00 são dispensadas (IR: Lei 9.430/1996, art. 67; CSRF: Lei 10.833/2003, art. 31, § 3º; INSS: IN RFB 2.110/2022, art. 115). Regras conferidas em 27/10/2026.
+    </p>
+  </section>
+</main>
+
+<script>
+const ITENS = __ITENS__;
+__HIPOTESES__
+__ITENSHIP__
+__ART3__
+
+/* IN RFB 1.234/2012, Anexo I — composição por código (%) */
+const IN1234 = {
+  '6190': { ir: 4.80, csll: 1, cofins: 3, pis: 0.65, desc: 'Demais serviços (9,45%)' },
+  '6147': { ir: 1.20, csll: 1, cofins: 3, pis: 0.65, desc: 'Bens, serviços com emprego de materiais, construção civil com materiais, hospitalares e transporte de cargas (5,85%)' },
+  '6175': { ir: 2.40, csll: 1, cofins: 3, pis: 0.65, desc: 'Transporte de passageiros (7,05%)' },
+  '6188': { ir: 2.40, csll: 1, cofins: 3, pis: 0.65, desc: 'Bancos, financeiras, seguradoras e previdência complementar (7,05%)' },
+  '8863': { ir: 0,    csll: 1, cofins: 3, pis: 0.65, desc: 'Associações profissionais e cooperativas (4,65%)' }
+};
+
+const $ = id => document.getElementById(id);
+const fmtPct = v => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+const semAcento = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+const escapeHtml = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const lista = a => a.length > 1 ? a.slice(0, -1).join(', ') + ' e ' + a[a.length - 1] : (a[0] || '');
+
+/* ── Busca: itens da LC 116 + hipóteses legais ───────────────────── */
+const LISTA = [
+  ...Object.keys(ITENS).sort().map(code => ({ tipo: 'item', id: code, rotulo: code, desc: ITENS[code],
+    busca: semAcento(code + ' ' + code.replace('.', '') + ' ' + ITENS[code]) })),
+  ...Object.entries(HIP).map(([id, h]) => ({ tipo: 'hip', id, rotulo: h.foraLC ? 'Fora LC' : 'Hipótese', desc: h.nome, sub: h.grupo,
+    busca: semAcento(h.nome + ' ' + h.grupo + ' ' + (h.ressalva || '') + ' ' + (h.foraLC || '')) }))
+];
+let sel = null, activeIdx = -1, resultados = [];
+const input = $('item-input'), list = $('item-list');
+
+function highlight(text, termo) {
+  if (!termo || termo.length < 2) return escapeHtml(text);
+  const plain = semAcento(text);
+  let out = '', i = 0, idx;
+  while ((idx = plain.indexOf(termo, i)) !== -1) {
+    out += escapeHtml(text.slice(i, idx)) + '<mark>' + escapeHtml(text.slice(idx, idx + termo.length)) + '</mark>';
+    i = idx + termo.length;
+  }
+  return out + escapeHtml(text.slice(i));
+}
+function buscar(txt) {
+  const termos = semAcento(txt.trim()).split(/\s+/).filter(Boolean);
+  if (!termos.length) return LISTA.filter(x => x.tipo === 'item');
+  // prioriza termos no início de palavra ("locação" não traz "colocação"); se nada achar, aceita trecho no meio
+  const inicio = LISTA.filter(it => termos.every(t => (' ' + it.busca.replace(/[^a-z0-9.]+/g, ' ')).includes(' ' + t)));
+  const achados = inicio.length ? inicio : LISTA.filter(it => termos.every(t => it.busca.includes(t)));
+  // itens primeiro, depois hipóteses
+  return achados.filter(x => x.tipo === 'item').concat(achados.filter(x => x.tipo === 'hip'));
+}
+function renderList() {
+  const termos = semAcento(input.value.trim()).split(/\s+/).filter(Boolean);
+  resultados = buscar(input.value).slice(0, 50);
+  activeIdx = -1;
+  if (!resultados.length) {
+    list.innerHTML = '<li class="empty" role="option" aria-disabled="true">Nada encontrado. Tente o código do item (ex.: 17.06) ou o nome da atividade.</li>';
+  } else {
+    let lastTipo = null;
+    list.innerHTML = resultados.map((it, i) => {
+      let head = '';
+      if (it.tipo !== lastTipo) {
+        head = `<li class="group" role="presentation">${it.tipo === 'item' ? 'Itens da LC 116' : 'Hipóteses legais e operações fora da LC 116'}</li>`;
+        lastTipo = it.tipo;
+      }
+      const d = termos.length === 1 ? highlight(it.desc, termos[0]) : escapeHtml(it.desc);
+      return head + `<li role="option" id="opt-${i}" data-i="${i}" aria-selected="false"><span class="code${it.tipo === 'hip' ? ' hip' : ''}">${escapeHtml(it.rotulo)}</span><span>${d}${it.sub ? `<small>${escapeHtml(it.sub)}</small>` : ''}</span></li>`;
+    }).join('');
+  }
+  list.hidden = false; input.setAttribute('aria-expanded', 'true');
+}
+function closeList() { list.hidden = true; input.setAttribute('aria-expanded', 'false'); input.removeAttribute('aria-activedescendant'); }
+function setActive(i) {
+  const opts = list.querySelectorAll('li[data-i]');
+  opts.forEach(o => o.setAttribute('aria-selected', 'false'));
+  if (i < 0 || i >= opts.length) return;
+  activeIdx = i; opts[i].setAttribute('aria-selected', 'true');
+  input.setAttribute('aria-activedescendant', opts[i].id);
+  opts[i].scrollIntoView({ block: 'nearest' });
+}
+
+/* Perfil de enquadramento da seleção */
+function perfilDe(s) {
+  if (!s) return null;
+  if (s.tipo === 'item') {
+    const m = ITEM_HIP[s.id] || {};
+    return { tipo: 'item', item: s.id, hips: (m.h || []).filter(h => HIP[h]), c: m.c, obs: m.obs, fed: m.fed, mat: m.mat };
+  }
+  const h = HIP[s.id];
+  return { tipo: 'hip', item: null, hips: [s.id], foraLC: h.foraLC, nenhuma: h.nenhuma, fed: h.fed };
+}
+function choose(it) {
+  sel = { tipo: it.tipo, id: it.id };
+  input.value = (it.tipo === 'item' ? it.id + ' — ' : '') + it.desc;
+  const p = perfilDe(sel);
+  const hipsTxt = p.hips.filter(h => !HIP[h].foraLC).map(h => HIP[h].nome);
+  $('item-chosen').innerHTML = it.tipo === 'item'
+    ? `<strong>Item ${it.id}</strong> · ${escapeHtml(it.desc)}<br><span class="chosen-hips">${hipsTxt.length ? 'Hipóteses legais: ' + escapeHtml(lista(hipsTxt)) : 'Nenhuma hipótese de retenção federal ou de INSS ligada a este item.'}</span>`
+    : `<strong>${escapeHtml(it.desc)}</strong> · ${escapeHtml(HIP[it.id].grupo)}${HIP[it.id].foraLC ? '' : '<br><span class="chosen-hips">Consulta pela hipótese legal: o ISS depende do item da LC 116 e não é avaliado.</span>'}`;
+  $('item-chosen').hidden = false;
+  $('f-item').classList.remove('has-error');
+  closeList();
+  syncConditionals();
+  if (consultado) calcular();
+}
+function resolverDigitado() {
+  if (sel) return true;
+  const txt = input.value.trim();
+  if (!txt) return false;
+  const m = txt.match(/^(\d{1,2})\s*[.,]?\s*(\d{1,2})(?!\d)/);
+  if (m) {
+    const code = m[1].padStart(2, '0') + '.' + m[2].padStart(2, '0');
+    const it = LISTA.find(x => x.tipo === 'item' && x.id === code);
+    if (it) { choose(it); return true; }
+  }
+  const achados = buscar(txt);
+  if (achados.length === 1) { choose(achados[0]); return true; }
+  return false;
+}
+input.addEventListener('blur', () => { setTimeout(() => { if (!sel) resolverDigitado(); }, 150); });
+input.addEventListener('focus', () => { if (sel) input.select(); renderList(); });
+input.addEventListener('input', () => { sel = null; $('item-chosen').hidden = true; renderList(); syncConditionals(); });
+input.addEventListener('keydown', e => {
+  const n = list.querySelectorAll('li[data-i]').length;
+  if (e.key === 'ArrowDown') { e.preventDefault(); if (list.hidden) renderList(); setActive(Math.min(activeIdx + 1, n - 1)); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); setActive(Math.max(activeIdx - 1, 0)); }
+  else if (e.key === 'Enter') { e.preventDefault(); if (activeIdx >= 0 && n) choose(resultados[activeIdx]); else if (!resolverDigitado() && n) choose(resultados[0]); }
+  else if (e.key === 'Escape') { closeList(); }
+});
+list.addEventListener('mousedown', e => { const li = e.target.closest('li[data-i]'); if (li) { e.preventDefault(); choose(resultados[+li.dataset.i]); } });
+document.addEventListener('click', e => { if (!e.target.closest('.combo')) closeList(); });
+
+/* ── Campos condicionais ─────────────────────────────────────────── */
+function syncConditionals() {
+  const p = perfilDe(sel);
+  const regime = $('regime').value, tomador = $('tomador').value, cessao = $('cessao').value;
+  const temCessao = cessao !== 'nao';
+  $('f-anexo').hidden = !(regime === 'simples' && temCessao);
+  $('f-cprb').hidden = !(['lucro', 'coop'].includes(regime) && temCessao);
+  $('f-mat').hidden = !(p && p.mat && !['pj', 'pjsn'].includes(tomador) && ['lucro', 'coop'].includes(regime));
+  const a3 = p && p.item && ART3[p.item];
+  const art6 = p && p.item && ART6_II.includes(p.item);
+  const semIss = !p || p.tipo === 'hip' || regime === 'mei';
+  $('f-mesmo').hidden = semIss || !!art6 || !!(a3 && a3.multi);
+  $('f-exec').hidden = semIss || !(a3 && !a3.tomador && !a3.multi && !art6);
+  $('exec-help').textContent = a3 ? `Neste item o ISS é devido ${a3.multi ? '' : 'no local '}${a3.local} (art. 3º, ${a3.inc}).` : '';
+
+  const inssH = p ? p.hips.filter(h => HIP[h].inss) : [];
+  $('cessao-help').textContent = !p ? 'Define a retenção de INSS.'
+    : inssH.length ? 'Hipótese de INSS: ' + lista(inssH.map(h => `${HIP[h].nome} (art. ${HIP[h].inss.art}, ${HIP[h].inss.inc}${HIP[h].inss.art === '112' ? ', só com cessão' : ''})`)) + '.'
+    : 'Nenhuma hipótese da IN 2.110/2022 ligada a esta seleção.';
+  $('tomador-help').textContent = tomador === 'fed' ? 'Aplica a retenção única da IN RFB 1.234/2012 (IR, CSLL, PIS e COFINS no mesmo DARF).'
+    : tomador === 'est' ? 'Retém IR pelas alíquotas da IN RFB 1.234/2012, quando o ente regulamentou (Tema 1.130 do STF).'
+    : tomador === 'pjsn' ? 'Tomador do Simples retém IR e INSS, mas não é obrigado a reter CSLL, PIS e COFINS.' : '';
+  $('regime-help').textContent = regime === 'simples' ? 'Dispensa de IR e CSRF depende de o prestador declarar a condição de optante.'
+    : regime === 'mei' ? 'MEI não sofre retenção de tributos federais nem de ISS.'
+    : regime === 'coop' ? 'Serviços pessoais dos associados: IR de 1,5% (RIR/2018, art. 719), qualquer que seja o serviço.' : '';
+}
+['regime', 'tomador', 'cessao'].forEach(id => $(id).addEventListener('change', () => { syncConditionals(); if (consultado) calcular(); }));
+['anexo', 'cprb', 'mat', 'mesmo', 'exec'].forEach(id => $(id).addEventListener('change', () => { if (consultado) calcular(); }));
+
+/* ── Motor de regras ─────────────────────────────────────────────── */
+function linha(o) { return Object.assign({ aliq: null, codigo: '—', fund: '' }, o); }
+const FED = [['ir', 'IRRF', 'Imposto de renda'], ['csll', 'CSLL', 'Contribuição social'], ['cofins', 'COFINS', ''], ['pis', 'PIS/Pasep', '']];
+const fedRow = (k, o) => { const [, nome, sub] = FED.find(f => f[0] === k); return linha(Object.assign({ key: k, nome, sub }, o)); };
+const hipTxt = hs => hs.map(h => HIP[h].nome + (HIP[h].ressalva ? ` (${HIP[h].ressalva})` : '')).join('; ');
+
+function consultar(inp) {
+  const p = inp.perfil;
+  const rows = [], atencao = [];
+  const pos2027 = inp.data >= '2027-01-01';
+  const simples = inp.regime === 'simples', mei = inp.regime === 'mei', coop = inp.regime === 'coop';
+  const privado = ['pj', 'pjsn'].includes(inp.tomador);
+  const irH = p.hips.filter(h => HIP[h].ir);
+  const pccH = p.hips.filter(h => HIP[h].pcc);
+  const inssH = p.hips.filter(h => HIP[h].inss);
+  const publi = irH.some(h => h === 'm-publi');
+  const confItem = !!p.c;
+
+  /* Federais */
+  if (mei || simples) {
+    const fund = mei ? 'MEI não sofre retenção de IR, CSLL, PIS e COFINS na fonte.'
+      : inp.tomador === 'fed' ? 'Optante pelo Simples Nacional: dispensa da retenção única (IN RFB 1.234/2012, art. 4º, XI; RIR/2018, art. 720, § 6º).'
+      : 'Optante pelo Simples Nacional: dispensa de retenção de IR e CSRF (LC 123/2006, art. 13; IN SRF 459/2004, art. 3º).';
+    FED.forEach(([k]) => rows.push(fedRow(k, { status: 'nao', fund })));
+    if (simples) atencao.push('A dispensa vale se o prestador comprovar a condição de optante (declaração do Anexo IV da IN 1.234/2012 para órgão federal; para PJ privada, declaração da IN SRF 459/2004). Sem ela, o tomador deve reter.');
+  }
+  else if (inp.tomador === 'fed' || inp.tomador === 'est') {
+    let cod = coop ? '8863' : (p.mat && inp.mat === 'sim') ? '6147' : (p.fed || '6190');
+    const t = IN1234[cod];
+    const foraConf = p.tipo === 'hip' && p.foraLC && cod === '6190';
+    const fundBase = `IN RFB 1.234/2012, Anexo I — ${t.desc}.` + (foraConf ? ' Para esta operação, confirme o enquadramento no Anexo I e as dispensas do art. 4º.' : '');
+    if (inp.tomador === 'fed') {
+      FED.forEach(([k]) => {
+        if (pos2027 && (k === 'pis' || k === 'cofins')) {
+          rows.push(fedRow(k, { status: 'confirmar', aliq: t[k],
+            fund: 'A partir de 2027 o PIS e a COFINS são substituídos pela CBS (LC 214/2025). Confirme a composição da retenção única da IN 1.234 vigente na data do pagamento.' }));
+        } else if (t[k] === 0) {
+          rows.push(fedRow(k, { status: 'nao', fund: `IN RFB 1.234/2012, Anexo I — ${t.desc}: sem parcela de ${k.toUpperCase()}.` }));
+        } else {
+          rows.push(fedRow(k, { status: foraConf ? 'confirmar' : 'reter', aliq: t[k],
+            codigo: pos2027 ? `DARF ${cod} (confirmar código em 2027)` : `DARF ${cod} — único para os 4 tributos`, fund: fundBase }));
+        }
+      });
+      if (publi) atencao.push('Órgão federal retém sobre a remuneração da agência; valores de veiculação ficam fora da base (SC Cosit 186/2018).');
+    } else {
+      rows.push(fedRow('ir', t.ir ? { status: foraConf ? 'confirmar' : 'reter', aliq: t.ir, codigo: 'Retido pelo próprio ente (receita do estado/município)',
+        fund: 'CF, arts. 157, I e 158, I; Tema 1.130 do STF; IN RFB 1.234/2012 com redação da IN RFB 2.145/2023 — alíquotas do Anexo I.' }
+        : { status: 'nao', fund: `IN RFB 1.234/2012, Anexo I — ${t.desc}: sem parcela de IR.` }));
+      atencao.push('Estados e municípios aplicam a retenção de IR se tiverem regulamentado a adesão à IN 1.234/2012. Confirme o decreto do ente contratante.');
+      ['csll', 'cofins', 'pis'].forEach(k => rows.push(fedRow(k, { status: 'nao',
+        fund: 'Estados, DF e municípios só retêm CSLL, PIS e COFINS se tiverem convênio com a RFB (Lei 10.833/2003, art. 33).' })));
+    }
+  }
+  else {
+    /* IR — tomador privado */
+    if (coop) {
+      rows.push(fedRow('ir', { status: 'reter', aliq: 1.5, codigo: 'DARF 3280',
+        fund: 'Hipótese: serviços pessoais prestados por associados de cooperativa de trabalho ou associação profissional — RIR/2018, art. 719. O imposto retido é compensado pela entidade quando paga aos associados.' }));
+    } else if (!irH.length) {
+      rows.push(fedRow('ir', { status: 'nao', fund: p.nenhuma || 'Nenhuma hipótese de retenção de IR entre pessoas jurídicas (RIR/2018, arts. 714 a 719; Lei 10.833/2003, art. 29).' }));
+    } else {
+      const cfgs = [...new Map(irH.map(h => [HIP[h].ir.aliq + '|' + HIP[h].ir.cod + '|' + (HIP[h].ir.modo || 'reter'), HIP[h].ir])).values()];
+      if (cfgs.length > 1) {
+        rows.push(fedRow('ir', { status: 'confirmar',
+          fund: `O serviço pode se enquadrar em hipóteses com regras diferentes: ${irH.map(h => `${HIP[h].nome} (${fmtPct(HIP[h].ir.aliq)}, ${HIP[h].ir.base})`).join('; ')}. Confirme a natureza do contrato.` }));
+      } else {
+        const ir = cfgs[0];
+        const modo = ir.modo || 'reter';
+        const status = modo === 'prestador' ? 'prestador' : (modo === 'confirmar' || confItem) ? 'confirmar' : 'reter';
+        rows.push(fedRow('ir', { status, aliq: ir.aliq, codigo: ir.cod, fund: `Hipótese: ${hipTxt(irH)} — ${ir.base}.` + (ir.obs ? ' ' + ir.obs : '') }));
+      }
+    }
+    /* CSRF — tomador privado */
+    if (inp.tomador === 'pjsn' && (pccH.length || coop)) {
+      ['csll', 'cofins', 'pis'].forEach(k => rows.push(fedRow(k, { status: 'nao',
+        fund: 'Tomador optante pelo Simples Nacional não é obrigado a reter CSLL, PIS e COFINS (IN SRF 459/2004, art. 1º, § 6º).' })));
+    } else if (pccH.length) {
+      const comp = pos2027 ? { csll: 1 } : { csll: 1, cofins: 3, pis: 0.65 };
+      const fundH = `Hipótese: ${hipTxt(pccH)} — ${HIP[pccH[0]].pcc}` + (pos2027 ? ', com redação da LC 214/2025.' : '.');
+      ['csll', 'cofins', 'pis'].forEach(k => {
+        if (!(k in comp)) {
+          rows.push(fedRow(k, { status: 'nao', fund: 'Retenção extinta para pagamentos a partir de 01/01/2027 (LC 214/2025, art. 509, que altera os arts. 30 e 31 da Lei 10.833/2003).' }));
+        } else if (coop && k === 'csll') {
+          rows.push(fedRow(k, { status: 'nao', fund: 'Não há retenção de CSLL sobre atos cooperados (IN SRF 459/2004, art. 5º).' }));
+        } else {
+          rows.push(fedRow(k, { status: confItem ? 'confirmar' : 'reter', aliq: comp[k],
+            codigo: pos2027 ? 'DARF 5987' : 'DARF 5952 (CSLL+COFINS+PIS)', fund: fundH }));
+        }
+      });
+    } else {
+      const fund = publi ? 'Propaganda e publicidade não constam do art. 30 da Lei 10.833/2003 (SC SRRF 9ª RF 225/2004).'
+        : p.nenhuma || 'Nenhuma hipótese do art. 30 da Lei 10.833/2003 (lista fechada, detalhada no art. 1º da IN SRF 459/2004).';
+      ['csll', 'cofins', 'pis'].forEach(k => rows.push(fedRow(k, { status: 'nao', fund })));
+    }
+  }
+
+  /* INSS — IN RFB 2.110/2022 */
+  const inss = o => linha(Object.assign({ key: 'inss', nome: 'INSS', sub: 'Contribuição previdenciária' }, o));
+  if (mei) {
+    rows.push(inss({ status: 'nao', fund: 'MEI não sofre retenção. Se o MEI for contratado para hidráulica, eletricidade, pintura, alvenaria, carpintaria ou manutenção de veículos, o contratante recolhe a CPP de 20% (LC 123/2006, art. 18-B).' }));
+  } else if (inp.cessao === 'nao') {
+    rows.push(inss({ status: 'nao', fund: 'Sem cessão de mão de obra ou empreitada não há retenção (Lei 8.212/1991, art. 31).' }));
+  } else if (simples && inp.anexo !== 'sim') {
+    rows.push(inss({ status: 'nao', fund: 'Optante pelo Simples tributado nos Anexos III ou V recolhe a CPP dentro do DAS: não há retenção. Só o Anexo IV sofre retenção (LC 123/2006, art. 18, § 5º-C).' }));
+  } else {
+    const aplicaveis = inssH.filter(h => HIP[h].inss.art === '111' || inp.cessao === 'cessao');
+    const aliq = (!simples && inp.cprb === 'sim') ? 3.5 : 11;
+    const codigo = 'DCTFWeb (EFD-Reinf R-2010 / R-2020)';
+    const cprbTxt = aliq === 3.5 ? '; Lei 12.546/2011, art. 7º, § 6º (CPRB)' : '';
+    if (aplicaveis.length) {
+      rows.push(inss({ status: confItem ? 'confirmar' : 'reter', aliq, codigo,
+        fund: `Hipótese: ${aplicaveis.map(h => `${HIP[h].nome} (IN RFB 2.110/2022, art. ${HIP[h].inss.art}, ${HIP[h].inss.inc})`).join('; ')} — Lei 8.212/1991, art. 31${cprbTxt}.` + (aplicaveis.some(h => HIP[h].ressalva) ? ' Ressalva: ' + aplicaveis.filter(h => HIP[h].ressalva).map(h => HIP[h].ressalva).join('; ') + '.' : '') }));
+      atencao.push('INSS é dispensado quando a contratada não tem empregados, o serviço é prestado pessoalmente pelo titular ou sócio e o faturamento do mês anterior não passa de 2× o teto do salário de contribuição; ou em profissão regulamentada prestada pessoalmente pelos sócios (IN RFB 2.110/2022, art. 115).');
+    } else if (inssH.length) {
+      rows.push(inss({ status: 'nao', fund: `${lista(inssH.map(h => HIP[h].nome))} está no art. 112 da IN RFB 2.110/2022, que só se aplica a cessão de mão de obra, não a empreitada.` }));
+    } else {
+      rows.push(inss({ status: 'confirmar', aliq, codigo,
+        fund: 'Nenhuma hipótese dos arts. 111 e 112 da IN RFB 2.110/2022 ligada a esta seleção. As listas são exaustivas (art. 113): se o serviço não se encaixar em nenhuma, não há retenção. Pesquise pela atividade para conferir.' }));
+    }
+  }
+
+  /* ISS — LC 116/2003, arts. 3º e 6º */
+  const iss = o => linha(Object.assign({ key: 'iss', nome: 'ISS', sub: 'Imposto municipal', codigo: 'Guia do município' }, o));
+  if (mei) {
+    rows.push(iss({ status: 'nao', codigo: '—', fund: 'MEI recolhe ISS em valor fixo no DAS-MEI: não há retenção.' }));
+  } else if (p.tipo === 'hip') {
+    rows.push(p.foraLC
+      ? iss({ status: 'nao', codigo: '—', fund: `Operação fora da Lista de Serviços da LC 116/2003 (na NFS-e Nacional, código ${p.foraLC}): não há ISS.` })
+      : iss({ status: 'confirmar', codigo: '—', fund: 'Consulta feita pela hipótese legal. Para avaliar o ISS, consulte pelo item da LC 116.' }));
+  } else {
+    const a3 = ART3[p.item];
+    const art6 = ART6_II.includes(p.item);
+    const local = a3 ? `ISS devido ${a3.multi ? '' : 'no local '}${a3.local} (LC 116/2003, art. 3º, ${a3.inc}).` : 'ISS devido no município do estabelecimento prestador (LC 116/2003, art. 3º, caput).';
+    if (art6) {
+      rows.push(iss({ status: 'reter', codigo: a3 ? 'Guia do município do local da prestação' : 'Guia do município',
+        fund: `${local} O tomador PJ é responsável pelo ISS deste item, ainda que imune ou isento (art. 6º, § 2º, II).` }));
+    } else if (a3 && a3.multi) {
+      rows.push(iss({ status: 'confirmar', fund: `${local} A responsabilidade depende da lei de cada município envolvido.` }));
+    } else if (a3) {
+      const noTomador = a3.tomador || inp.exec === 'tomador';
+      if (noTomador && inp.mesmoMun === 'sim') {
+        rows.push(iss({ status: 'confirmar', fund: `${local} Prestador e tomador no mesmo município: a retenção depende da lei local de substituição tributária (art. 6º, caput).` }));
+      } else if (noTomador) {
+        rows.push(iss({ status: 'confirmar', codigo: 'Guia do município do tomador',
+          fund: `${local} Como o serviço ocorre no município do tomador e o prestador é de fora, a lei municipal costuma atribuir a retenção ao tomador (art. 6º, caput) — confirme na legislação local.` }));
+      } else {
+        rows.push(iss({ status: 'nao', fund: `${local} Como o serviço não ocorre no município do tomador, o ISS é recolhido pelo prestador ao município onde o serviço foi executado.` }));
+      }
+    } else if (inp.mesmoMun === 'sim') {
+      rows.push(iss({ status: 'confirmar', fund: `${local} Prestador e tomador no mesmo município: a retenção depende da lei local de substituição tributária (art. 6º, caput).` }));
+    } else {
+      rows.push(iss({ status: 'nao', fund: `${local} Prestador estabelecido em outro município: em regra o ISS é do município do prestador e não há retenção. Exceção: se o município do tomador exigir cadastro de prestadores de fora (CPOM) e o prestador não estiver cadastrado, o tomador retém.` }));
+    }
+    if (a3 && a3.obs) atencao.push(`ISS: ${a3.obs}`);
+    if (ART3_ADI[p.item]) atencao.push(`ISS: o inciso ${ART3_ADI[p.item]} do art. 3º (local do tomador) foi declarado inconstitucional (ADI 5.835 e 5.862). O imposto volta a ser devido no estabelecimento prestador.`);
+    if (p.item === '12.13') atencao.push('ISS: o 12.13 (produção de eventos) é a única exceção do item 12 ao inciso XVIII — segue a regra do estabelecimento prestador.');
+    if (simples && rows[rows.length - 1].status !== 'nao') atencao.push('ISS de prestador do Simples: retém-se a alíquota efetiva informada na nota; sem ela, a maior alíquota de ISS do anexo (LC 123/2006, art. 21, § 4º).');
+  }
+
+  if (p.c) atencao.unshift(p.c);
+  if (p.obs) atencao.unshift(p.obs);
+  return { rows, atencao, pos2027 };
+}
+
+/* ── Validação e render ──────────────────────────────────────────── */
+let consultado = false;
+function lerForm() {
+  return {
+    perfil: perfilDe(sel), data: hoje(), tomador: $('tomador').value, regime: $('regime').value,
+    cessao: $('cessao').value, anexo: $('anexo').value, cprb: $('cprb').value,
+    mat: $('f-mat').hidden ? 'nao' : $('mat').value,
+    mesmoMun: $('mesmo').value, exec: $('exec').value
+  };
+}
+function validar(inp) {
+  let ok = true;
+  const set = (id, bad) => { $(id).classList.toggle('has-error', bad); if (bad) ok = false; };
+  set('f-item', !inp.perfil);
+  return ok;
+}
+const STATUS_TXT = { reter: 'Retido', nao: 'Não retido', confirmar: 'Confirmar', prestador: 'Prestador recolhe' };
+/* Sem campo de data: as regras seguem a data de hoje (CSRF muda em 01/01/2027) */
+function hoje() { const d = new Date(), pad = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
+
+function calcular() {
+  const inp = lerForm();
+  if (!validar(inp)) {
+    const first = document.querySelector('.field.has-error input, .field.has-error select');
+    if (first) { first.closest('.field').scrollIntoView({ behavior: 'smooth', block: 'center' }); if (!consultado) first.focus({ preventScroll: true }); }
+    return;
+  }
+  consultado = true;
+  $('btn').textContent = 'Atualizar consulta';
+  const res = consultar(inp);
+  const p = inp.perfil;
+  const txt = STATUS_TXT;
+
+  const selLabel = p.tipo === 'item' ? `Item ${p.item}` : HIP[sel.id].nome;
+  const tomLabel = { pj: 'Tomador PJ privada', pjsn: 'Tomador PJ do Simples', fed: 'Tomador órgão federal', est: 'Tomador estado/município' }[inp.tomador];
+  const regLabel = { lucro: 'Prestador Lucro Presumido/Real', simples: 'Prestador Simples Nacional', mei: 'Prestador MEI', coop: 'Prestador cooperativa/associação' }[inp.regime];
+  $('result-tags').innerHTML = [selLabel, tomLabel, regLabel, res.pos2027 ? 'Regras de 2027' : 'Regras de 2026 (até 31/12)']
+    .map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('');
+
+  const grupo = st => res.rows.filter(x => x.status === st).map(x => x.nome);
+  const reter = grupo('reter'), conf = grupo('confirmar'), prest = grupo('prestador');
+  let titulo, cls;
+  if (reter.length) { titulo = 'Retido: ' + lista(reter); cls = 'sim'; }
+  else if (conf.length) { titulo = 'Retenção a confirmar'; cls = 'conf'; }
+  else { titulo = 'Sem retenção na fonte'; cls = 'nao'; }
+  const linhas = [];
+  if (conf.length && reter.length) linhas.push(`A confirmar: ${lista(conf)}.`);
+  else if (conf.length) linhas.push(`Depende de confirmação: ${lista(conf)}.`);
+  if (prest.length) linhas.push('IR recolhido pelo próprio prestador, não descontado pelo tomador.');
+  const hipsAplic = p.hips.filter(h => !HIP[h].foraLC);
+  const enq = hipsAplic.length
+    ? `<div class="enq"><div class="enq-title">Enquadramento legal</div>${hipsAplic.map(h => `<div class="enq-item"><strong>${escapeHtml(HIP[h].nome)}</strong> <span>· ${escapeHtml(HIP[h].grupo)}</span>${HIP[h].ressalva ? `<div class="enq-ress">${escapeHtml(HIP[h].ressalva)}</div>` : ''}</div>`).join('')}</div>`
+    : `<div class="enq"><div class="enq-title">Enquadramento legal</div><div class="enq-item">${p.foraLC ? 'Operação fora da LC 116 sem hipótese de retenção entre pessoas jurídicas privadas.' : 'Nenhuma hipótese de retenção federal ou de INSS ligada a esta seleção.'}</div></div>`;
+  $('resumo').innerHTML = `<div class="resumo ${cls}"><div class="resumo-title">${escapeHtml(titulo)}</div>${linhas.map(l => `<div class="resumo-sub">${escapeHtml(l)}</div>`).join('')}${enq}</div>`;
+
+  $('alerts').innerHTML = res.atencao.length
+    ? `<div class="alert alert-warning" role="note"><div><div class="alert-title">${conf.length ? 'Antes de concluir, confirme' : 'Pontos de atenção'}</div><ul>${res.atencao.map(a => `<li>${escapeHtml(a)}</li>`).join('')}</ul></div></div>` : '';
+
+  const head = `<div class="ret-row head" role="row"><span role="columnheader">Tributo</span><span role="columnheader">Situação</span><span role="columnheader" style="text-align:right">Alíquota</span><span role="columnheader">Recolhimento</span></div>`;
+  const body = res.rows.map(x => `<div class="ret-row${x.status === 'nao' ? ' muted' : ''}" role="row">
+      <div class="ret-name" role="cell">${x.nome}${x.sub ? `<small>${x.sub}</small>` : ''}</div>
+      <div class="cell-status" role="cell"><span class="badge ${x.status}">${txt[x.status]}</span></div>
+      <div class="ret-num cell-aliq" role="cell"><span class="mobile-label">Alíquota</span>${x.aliq != null ? fmtPct(x.aliq) : '—'}</div>
+      <div class="ret-code cell-code" role="cell"><span class="mobile-label">Recolhimento</span>${escapeHtml(x.codigo)}</div>
+      <div class="ret-detail" role="cell"><span class="fund">${escapeHtml(x.fund)}</span></div>
+    </div>`).join('');
+  $('tabela').innerHTML = head + body;
+  const sec = $('resultado');
+  const firstTime = sec.hidden;
+  sec.hidden = false;
+  if (firstTime) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+$('form').addEventListener('submit', e => { e.preventDefault(); resolverDigitado(); closeList(); calcular(); });
+syncConditionals();
+</script>
+</body>
+</html>

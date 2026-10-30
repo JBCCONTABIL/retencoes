@@ -612,7 +612,7 @@ function consultar(inp) {
     } else if (inp.mesmoMun === 'sim') {
       rows.push(iss({ status: 'confirmar', fund: `${local} Prestador e tomador no mesmo município: a retenção depende da lei local de substituição tributária (art. 6º, caput).` }));
     } else {
-      rows.push(iss({ status: 'nao', fund: `${local} Prestador estabelecido em outro município: em regra o ISS é do município do prestador e não há retenção. Exceção: se o município do tomador exigir cadastro de prestadores de fora (CPOM) e o prestador não estiver cadastrado, o tomador retém.` }));
+      rows.push(iss({ status: 'nao', fund: `${local} Prestador estabelecido em outro município: o ISS é do município do prestador e não há retenção. A exigência de cadastro de prestadores de fora (CPOM), com retenção pelo tomador quando o prestador não está cadastrado, foi declarada inconstitucional pelo STF (Tema 1.020, RE 1.167.509).` }));
     }
     if (a3 && a3.obs) atencao.push(`ISS: ${a3.obs}`);
     if (ART3_ADI[p.item]) atencao.push(`ISS: o inciso ${ART3_ADI[p.item]} do art. 3º (local do tomador) foi declarado inconstitucional (ADI 5.835 e 5.862). O imposto volta a ser devido no estabelecimento prestador.`);

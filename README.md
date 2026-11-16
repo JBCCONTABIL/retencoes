@@ -8,6 +8,7 @@ Publicado em https://jbccontabil.github.io/retencoes/
 - `index.html` — a ferramenta (arquivo único, sem dependências além da fonte Lato).
 - `src/hipoteses.js` — fonte de verdade: hipóteses legais de retenção (RIR/2018 arts. 714, 716, 718, 719; Lei 10.833/2003 arts. 29 e 30 c/c IN SRF 459/2004; IN RFB 2.110/2022 arts. 111 a 115; operações fora da LC 116).
 - `src/itens.js` — ligação de cada item da LC 116 às hipóteses em que se enquadra.
+- `src/reinf.js` — códigos da EFD-Reinf exibidos no resultado: natureza do rendimento do R-4020 (Tabela 01, pacote oficial do SPED de 15/01/2026) e tipo de serviço do R-2010/R-2020 (Tabela 06, Portal do Sped Tabelas).
 - `src/art3.js` — local de incidência do ISS (LC 116/2003, art. 3º) e responsabilidade do tomador (art. 6º, § 2º, II).
 - `src/template.html`, `src/lc116_norm.json`, `src/logo_src.txt` — página, lista de itens e logo.
 

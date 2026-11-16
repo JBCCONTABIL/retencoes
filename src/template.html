@@ -136,6 +136,7 @@
   .ret-detail { grid-column: 1 / -1; font-size: 12px; color: var(--dark-2); line-height: 1.5; margin-top: -4px; }
   .ret-detail .fund { color: var(--dark-1); }
   .ret-code { font-size: 12px; color: var(--dark-2); line-height: 1.4; }
+  .ret-code .reinf { display: block; margin-top: 4px; font-size: 11px; color: var(--info); font-variant-numeric: tabular-nums; }
   .ret-row.muted .ret-name, .ret-row.muted .ret-num { color: var(--dark-1); }
   .mobile-label { display: none; }
 
@@ -306,6 +307,7 @@ const ITENS = __ITENS__;
 __HIPOTESES__
 __ITENSHIP__
 __ART3__
+__REINF__
 
 /* IN RFB 1.234/2012, Anexo I — composição por código (%) */
 const IN1234 = {
@@ -478,6 +480,7 @@ function consultar(inp) {
   const inssH = p.hips.filter(h => HIP[h].inss);
   const publi = irH.some(h => h === 'm-publi');
   const confItem = !!p.c;
+  let codFed = null;
 
   /* Federais */
   if (mei || simples) {
@@ -488,7 +491,7 @@ function consultar(inp) {
     if (simples) atencao.push('A dispensa vale se o prestador comprovar a condição de optante (declaração do Anexo IV da IN 1.234/2012 para órgão federal; para PJ privada, declaração da IN SRF 459/2004). Sem ela, o tomador deve reter.');
   }
   else if (inp.tomador === 'fed' || inp.tomador === 'est') {
-    let cod = coop ? '8863' : (p.mat && inp.mat === 'sim') ? '6147' : (p.fed || '6190');
+    let cod = codFed = coop ? '8863' : (p.mat && inp.mat === 'sim') ? '6147' : (p.fed || '6190');
     const t = IN1234[cod];
     const foraConf = p.tipo === 'hip' && p.foraLC && cod === '6190';
     const fundBase = `IN RFB 1.234/2012, Anexo I — ${t.desc}.` + (foraConf ? ' Para esta operação, confirme o enquadramento no Anexo I e as dispensas do art. 4º.' : '');
@@ -620,6 +623,18 @@ function consultar(inp) {
     if (simples && rows[rows.length - 1].status !== 'nao') atencao.push('ISS de prestador do Simples: retém-se a alíquota efetiva informada na nota; sem ela, a maior alíquota de ISS do anexo (LC 123/2006, art. 21, § 4º).');
   }
 
+  /* EFD-Reinf: natureza do rendimento (R-4020) e tipo de serviço (R-2010/R-2020) */
+  rows.forEach(r => {
+    if (r.status === 'nao') return;
+    if (['ir', 'csll', 'cofins', 'pis'].includes(r.key)) {
+      const nat = codFed ? natPublica(p, codFed) : coop ? NAT_COOP_PRIV : natPrivada(r.key === 'ir' ? irH : pccH);
+      if (nat) r.reinf = `R-4020 · natureza ${nat}` + (r.status === 'prestador' ? ' (sem código de receita; o prestador recolhe pelo R-4080)' : '');
+    } else if (r.key === 'inss') {
+      const ts = tipoServ(inssH.filter(h => HIP[h].inss.art === '111' || inp.cessao === 'cessao'));
+      if (ts) r.reinf = `R-2010/R-2020 · tipo de serviço ${ts}`;
+    }
+  });
+
   if (p.c) atencao.unshift(p.c);
   if (p.obs) atencao.unshift(p.obs);
   return { rows, atencao, pos2027 };
@@ -688,7 +703,7 @@ function calcular() {
       <div class="ret-name" role="cell">${x.nome}${x.sub ? `<small>${x.sub}</small>` : ''}</div>
       <div class="cell-status" role="cell"><span class="badge ${x.status}">${txt[x.status]}</span></div>
       <div class="ret-num cell-aliq" role="cell"><span class="mobile-label">Alíquota</span>${x.aliq != null ? fmtPct(x.aliq) : '—'}</div>
-      <div class="ret-code cell-code" role="cell"><span class="mobile-label">Recolhimento</span>${escapeHtml(x.codigo)}</div>
+      <div class="ret-code cell-code" role="cell"><span class="mobile-label">Recolhimento</span><span>${escapeHtml(x.codigo)}${x.reinf ? `<span class="reinf">EFD-Reinf ${escapeHtml(x.reinf)}</span>` : ''}</span></div>
       <div class="ret-detail" role="cell"><span class="fund">${escapeHtml(x.fund)}</span></div>
     </div>`).join('');
   $('tabela').innerHTML = head + body;
